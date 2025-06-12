@@ -1,10 +1,13 @@
 package com.aliyun.speedpix.model;
 
+import com.fasterxml.jackson.annotation.JacksonAnnotation;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * 网关响应基础类
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GatewayResponse {
 
     @JsonProperty("status")

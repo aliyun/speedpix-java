@@ -1,10 +1,12 @@
 package com.aliyun.speedpix.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * 创建预测任务响应的数据部分
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ComfyPromptResponseData {
 
     @JsonProperty("taskId")

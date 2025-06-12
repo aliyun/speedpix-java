@@ -1,10 +1,12 @@
 package com.aliyun.speedpix.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * 查询进度的响应
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ComfyProgressResponse extends GatewayResponse {
 
     @JsonProperty("data")

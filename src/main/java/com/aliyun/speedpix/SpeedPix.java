@@ -1,6 +1,7 @@
 package com.aliyun.speedpix;
 
 import com.aliyun.speedpix.exception.SpeedPixException;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
 
 import java.util.Map;
 
@@ -26,6 +27,27 @@ public class SpeedPix {
      */
     public static void setDefaultClient(SpeedPixClient client) {
         defaultClient = client;
+    }
+
+    /**
+     * 运行模型并返回结果（使用ComfyPromptRequest和默认客户端）
+     */
+    public static Object run(ComfyPromptRequest request) throws SpeedPixException, InterruptedException {
+        return getDefaultClient().run(request);
+    }
+
+    /**
+     * 运行模型并返回结果（使用ComfyPromptRequest和指定客户端）
+     */
+    public static Object run(ComfyPromptRequest request, SpeedPixClient client) throws SpeedPixException, InterruptedException {
+        return client.run(request);
+    }
+
+    /**
+     * 运行模型并返回结果（使用ComfyPromptRequest，支持resourceConfigId）
+     */
+    public static Object run(ComfyPromptRequest request, String resourceConfigId) throws SpeedPixException, InterruptedException {
+        return getDefaultClient().run(request, resourceConfigId);
     }
 
     /**

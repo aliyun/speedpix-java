@@ -1,5 +1,7 @@
 package com.aliyun.speedpix.util;
 
+import com.aliyun.speedpix.exception.SpeedPixException;
+import com.aliyun.speedpix.service.FilesService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Base64;
@@ -30,19 +32,26 @@ public class JsonEncodingUtils {
     /**
      * 编码对象，处理文件上传
      */
-    public static Object encodeJson(Object obj, FileEncodingStrategy strategy) throws IOException {
+    public static Map<String, Object> encodeJson(Map<String, Object> obj, FileEncodingStrategy strategy,
+        FilesService filesService)
+        throws IOException, SpeedPixException {
         if (obj == null) {
             return null;
         }
 
-        // 处理 Map
-        if (obj instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) obj;
-            Map<Object, Object> result = new HashMap<>();
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                result.put(entry.getKey(), encodeJson(entry.getValue(), strategy));
-            }
-            return result;
+        Map<String, Object> result = new HashMap<>();
+        for (Map.Entry<String, Object> entry : obj.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            result.put(key, encodeValue(value, strategy, filesService));
+        }
+        return result;
+    }
+
+    private static Object encodeValue(Object obj, FileEncodingStrategy strategy, FilesService filesService)
+        throws IOException, SpeedPixException {
+        if (obj == null) {
+            return null;
         }
 
         // 处理 Iterable (List, Set, etc.)
@@ -53,11 +62,11 @@ public class JsonEncodingUtils {
 
         // 处理文件路径字符串
         if (obj instanceof String) {
-            String str = (String) obj;
+            String str = (String)obj;
             Path path = Paths.get(str);
             if (Files.exists(path) && Files.isRegularFile(path)) {
                 try {
-                    return encodeFile(path, strategy);
+                    return encodeFile(path, strategy, filesService);
                 } catch (IOException e) {
                     // 如果文件处理失败，返回原字符串
                     return obj;
@@ -68,18 +77,18 @@ public class JsonEncodingUtils {
 
         // 处理 Path 对象
         if (obj instanceof Path) {
-            Path path = (Path) obj;
+            Path path = (Path)obj;
             if (Files.exists(path) && Files.isRegularFile(path)) {
-                return encodeFile(path, strategy);
+                return encodeFile(path, strategy, filesService);
             }
             return obj.toString();
         }
 
         // 处理 File 对象
         if (obj instanceof File) {
-            File file = (File) obj;
+            File file = (File)obj;
             if (file.exists() && file.isFile()) {
-                return encodeFile(file.toPath(), strategy);
+                return encodeFile(file.toPath(), strategy, filesService);
             }
             return file.getAbsolutePath();
         }
@@ -87,9 +96,12 @@ public class JsonEncodingUtils {
         // 处理 InputStream
         if (obj instanceof InputStream) {
             if (strategy == FileEncodingStrategy.BASE64) {
-                return encodeInputStreamToBase64((InputStream) obj);
+                return encodeInputStreamToBase64((InputStream)obj);
             } else {
-                throw new UnsupportedOperationException("URL encoding for InputStream requires file upload implementation");
+                // 使用带 FileUploadOptions 的方法避免歧义性
+                return filesService.create((InputStream)obj,
+                    new com.aliyun.speedpix.model.FileUploadOptions("file", null))
+                    .getAccessUrl();
             }
         }
 
@@ -99,7 +111,8 @@ public class JsonEncodingUtils {
     /**
      * 编码文件
      */
-    private static Object encodeFile(Path path, FileEncodingStrategy strategy) throws IOException {
+    private static Object encodeFile(Path path, FileEncodingStrategy strategy, FilesService filesService)
+        throws IOException, SpeedPixException {
         if (strategy == FileEncodingStrategy.BASE64) {
             long fileSize = Files.size(path);
             if (fileSize > MAX_BASE64_FILE_SIZE) {
@@ -108,8 +121,7 @@ public class JsonEncodingUtils {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.encodeBase64String(fileBytes);
         } else {
-            // URL 策略需要实际的文件上传实现
-            throw new UnsupportedOperationException("URL encoding requires file upload implementation");
+            return filesService.create(path).getAccessUrl();
         }
     }
 

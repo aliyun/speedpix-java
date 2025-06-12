@@ -10,16 +10,16 @@ public class FileObject {
     @JsonProperty("path")
     private String path;
 
-    @JsonProperty("expire_time")
+    @JsonProperty("expireTime")
     private String expireTime;
 
-    @JsonProperty("upload_url")
+    @JsonProperty("uploadUrl")
     private String uploadUrl;
 
-    @JsonProperty("access_url")
+    @JsonProperty("accessUrl")
     private String accessUrl;
 
-    @JsonProperty("object_key")
+    @JsonProperty("objectKey")
     private String objectKey;
 
     // 本地文件信息

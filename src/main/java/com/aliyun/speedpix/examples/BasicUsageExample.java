@@ -4,6 +4,7 @@ import com.aliyun.speedpix.SpeedPix;
 import com.aliyun.speedpix.SpeedPixClient;
 import com.aliyun.speedpix.exception.PredictionException;
 import com.aliyun.speedpix.exception.SpeedPixException;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
 import com.aliyun.speedpix.model.Prediction;
 
 import java.util.HashMap;
@@ -37,14 +38,18 @@ public class BasicUsageExample {
         System.out.println("=== 方法 1：直接运行示例 ===");
 
         // 创建客户端（自动从环境变量读取配置）
-        SpeedPixClient client = new SpeedPixClient(null, null, null);
+        SpeedPixClient client = new SpeedPixClient();
 
         // 准备输入参数
         Map<String, Object> input = new HashMap<>();
-        input.put("prompt", "A beautiful landscape");
+        input.put("image", "/Users/libin/Downloads/p850622.png");
 
         // 直接运行并获取结果
-        Object output = client.run("your-workflow-id", input);
+        Object output = client.run(ComfyPromptRequest.builder()
+            .workflowId("01jvp41b358md06w46fz1yz78a")
+            .aliasId("main")
+            .inputs(input)
+            .build());
 
         System.out.println("输出结果: " + output);
     }
@@ -57,10 +62,14 @@ public class BasicUsageExample {
 
         // 准备输入参数
         Map<String, Object> input = new HashMap<>();
-        input.put("prompt", "A magical forest");
+        input.put("image", "/Users/libin/Downloads/p850622.png");
 
         // 使用全局 run 函数
-        Object output = SpeedPix.run("your-workflow-id", input);
+        Object output = SpeedPix.run(ComfyPromptRequest.builder()
+            .workflowId("01jvp41b358md06w46fz1yz78a")
+            .aliasId("main")
+            .inputs(input)
+            .build());
 
         System.out.println("输出结果: " + output);
     }
@@ -75,11 +84,15 @@ public class BasicUsageExample {
 
         // 准备输入参数
         Map<String, Object> input = new HashMap<>();
-        input.put("prompt", "A futuristic city");
+        input.put("image", "/Users/libin/Downloads/p850622.png");
 
         try {
             // 创建预测任务
-            Prediction prediction = client.predictions().create("your-workflow-id", input);
+            Prediction prediction = client.predictions().create(ComfyPromptRequest.builder()
+                .workflowId("01jvp41b358md06w46fz1yz78a")
+                .aliasId("main")
+                .inputs(input)
+                .build());
             System.out.println("创建预测任务: " + prediction.getId());
 
             // 等待完成

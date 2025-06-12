@@ -2,13 +2,14 @@ package com.aliyun.speedpix;
 
 import com.aliyun.speedpix.exception.PredictionException;
 import com.aliyun.speedpix.exception.SpeedPixException;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
 import com.aliyun.speedpix.model.Prediction;
 import com.aliyun.speedpix.service.FilesService;
 import com.aliyun.speedpix.service.PredictionsService;
 import com.aliyun.speedpix.util.AuthUtils;
-import com.aliyun.speedpix.util.JsonEncodingUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import okhttp3.*;
 
 import java.io.IOException;
@@ -31,6 +32,10 @@ public class SpeedPixClient {
     private final PredictionsService predictionsService;
     private final FilesService filesService;
 
+    public SpeedPixClient() {
+        this(null, null, null, null, 30);
+    }
+
     /**
      * 构造函数
      */
@@ -49,21 +54,24 @@ public class SpeedPixClient {
 
         // 验证必需参数
         if (this.endpoint == null || this.endpoint.isEmpty()) {
-            throw new IllegalArgumentException("endpoint is required, set SPEEDPIX_ENDPOINT env var or pass endpoint parameter");
+            throw new IllegalArgumentException(
+                "endpoint is required, set SPEEDPIX_ENDPOINT env var or pass endpoint parameter");
         }
         if (this.appKey == null || this.appKey.isEmpty()) {
-            throw new IllegalArgumentException("appKey is required, set SPEEDPIX_APP_KEY env var or pass appKey parameter");
+            throw new IllegalArgumentException(
+                "appKey is required, set SPEEDPIX_APP_KEY env var or pass appKey parameter");
         }
         if (this.appSecret == null || this.appSecret.isEmpty()) {
-            throw new IllegalArgumentException("appSecret is required, set SPEEDPIX_APP_SECRET env var or pass appSecret parameter");
+            throw new IllegalArgumentException(
+                "appSecret is required, set SPEEDPIX_APP_SECRET env var or pass appSecret parameter");
         }
 
         // 创建 HTTP 客户端
         this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
-                .build();
+            .connectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .writeTimeout(timeoutSeconds, TimeUnit.SECONDS)
+            .build();
 
         this.objectMapper = new ObjectMapper();
 
@@ -89,29 +97,32 @@ public class SpeedPixClient {
     /**
      * 运行模型并返回结果
      */
-    public Object run(String workflowId, Map<String, Object> input) throws SpeedPixException, InterruptedException {
-        return run(workflowId, input, true, null, null, null, null, "default", 1.0);
+    public Prediction run(String workflowId, Map<String, Object> input) throws SpeedPixException, InterruptedException {
+        return run(workflowId, input, true, null, "main", null, null, "default", 1.0);
     }
 
     /**
-     * 运行模型并返回结果
+     * 运行模型并返回结果（使用ComfyPromptRequest）
      */
-    public Object run(
-            String workflowId,
-            Map<String, Object> input,
-            boolean wait,
-            String versionId,
-            String aliasId,
-            Boolean randomiseSeeds,
-            Boolean returnTempFiles,
-            String resourceConfigId,
-            double pollingInterval) throws SpeedPixException, InterruptedException {
+    public Prediction run(ComfyPromptRequest request) throws SpeedPixException, InterruptedException {
+        return run(request, "default", true, 1.0);
+    }
 
+    /**
+     * 运行模型并返回结果（使用ComfyPromptRequest）
+     */
+    public Prediction run(ComfyPromptRequest request, String resourceConfigId)
+        throws SpeedPixException, InterruptedException {
+        return run(request, resourceConfigId, true, 1.0);
+    }
+
+    /**
+     * 运行模型并返回结果（使用ComfyPromptRequest）
+     */
+    public Prediction run(ComfyPromptRequest request, String resourceConfigId, boolean wait, double pollingInterval)
+        throws SpeedPixException, InterruptedException {
         // 创建预测任务
-        Prediction prediction = predictionsService.create(
-                workflowId, input, versionId, aliasId,
-                randomiseSeeds, returnTempFiles, resourceConfigId
-        );
+        Prediction prediction = predictionsService.create(request, resourceConfigId);
 
         if (!wait) {
             return prediction;
@@ -119,7 +130,7 @@ public class SpeedPixClient {
 
         // 等待完成 - 直接在客户端中实现等待逻辑
         while (!prediction.isFinished()) {
-            Thread.sleep((long) (pollingInterval * 1000));
+            Thread.sleep((long)(pollingInterval * 1000));
             prediction = predictionsService.get(prediction.getId());
         }
 
@@ -127,7 +138,33 @@ public class SpeedPixClient {
             throw new PredictionException(prediction);
         }
 
-        return prediction.getOutput();
+        return prediction;
+    }
+
+    /**
+     * 运行模型并返回结果（兼容性方法）
+     */
+    public Prediction run(
+        String workflowId,
+        Map<String, Object> input,
+        boolean wait,
+        String versionId,
+        String aliasId,
+        Boolean randomiseSeeds,
+        Boolean returnTempFiles,
+        String resourceConfigId,
+        double pollingInterval) throws SpeedPixException, InterruptedException {
+
+        // 使用Builder模式创建ComfyPromptRequest
+        ComfyPromptRequest request = ComfyPromptRequest.builder(workflowId)
+            .inputs(input)
+            .versionId(versionId)
+            .aliasId(aliasId)
+            .randomiseSeeds(randomiseSeeds)
+            .returnTempFiles(returnTempFiles)
+            .build();
+
+        return run(request, resourceConfigId, wait, pollingInterval);
     }
 
     /**
@@ -145,9 +182,38 @@ public class SpeedPixClient {
     }
 
     /**
+     * 发送 POST 请求（支持自定义头部）
+     */
+    public <T> T post(String path, Object requestBody, Class<T> responseClass, Map<String, String> headers)
+        throws SpeedPixException {
+        try {
+            String requestBodyJson = null;
+            if (requestBody != null) {
+                requestBodyJson = objectMapper.writeValueAsString(requestBody);
+            }
+
+            RequestBody body = requestBodyJson != null ?
+                RequestBody.create(requestBodyJson, MediaType.get("application/json; charset=utf-8")) :
+                RequestBody.create("", MediaType.get("application/json; charset=utf-8"));
+
+            try (Response response = executeRequest("POST", path, headers, body)) {
+                if (response.body() == null) {
+                    throw new SpeedPixException("Empty response body");
+                }
+
+                String responseBody = response.body().string();
+                return objectMapper.readValue(responseBody, responseClass);
+            }
+        } catch (IOException e) {
+            throw new SpeedPixException("Request failed", e);
+        }
+    }
+
+    /**
      * 发送 HTTP 请求
      */
-    private <T> T request(String method, String path, Object requestBody, Class<T> responseClass) throws SpeedPixException {
+    private <T> T request(String method, String path, Object requestBody, Class<T> responseClass)
+        throws SpeedPixException {
         try {
             String url = buildUrl(path);
             String requestBodyJson = null;
@@ -158,13 +224,13 @@ public class SpeedPixClient {
 
             // 生成认证头
             Map<String, String> authHeaders = AuthUtils.generateAuthHeaders(
-                    method, path, appKey, appSecret, requestBodyJson, null
+                method, path, appKey, appSecret, requestBodyJson, null
             );
 
             // 构建请求
             Request.Builder requestBuilder = new Request.Builder()
-                    .url(url)
-                    .addHeader("User-Agent", userAgent);
+                .url(url)
+                .addHeader("User-Agent", userAgent);
 
             // 添加认证头
             for (Map.Entry<String, String> header : authHeaders.entrySet()) {
@@ -174,8 +240,8 @@ public class SpeedPixClient {
             // 设置请求体
             if ("POST".equals(method) && requestBodyJson != null) {
                 RequestBody body = RequestBody.create(
-                        requestBodyJson,
-                        MediaType.get("application/json; charset=utf-8")
+                    requestBodyJson,
+                    MediaType.get("application/json; charset=utf-8")
                 );
                 requestBuilder.post(body);
             } else if ("GET".equals(method)) {
@@ -193,9 +259,9 @@ public class SpeedPixClient {
                             String errorBody = response.body().string();
                             // 尝试解析错误响应
                             Map<?, ?> errorData = objectMapper.readValue(errorBody, Map.class);
-                            String subErrMessage = (String) errorData.get("subErrMessage");
-                            String errMessage = (String) errorData.get("errMessage");
-                            String apiInvokeId = (String) errorData.get("apiInvokeId");
+                            String subErrMessage = (String)errorData.get("subErrMessage");
+                            String errMessage = (String)errorData.get("errMessage");
+                            String apiInvokeId = (String)errorData.get("apiInvokeId");
 
                             if (subErrMessage != null) {
                                 errorMessage = subErrMessage;
@@ -227,7 +293,8 @@ public class SpeedPixClient {
     /**
      * 执行 HTTP 请求（支持自定义请求体）
      */
-    public Response executeRequest(String method, String path, Map<String, String> additionalHeaders, RequestBody requestBody) throws SpeedPixException {
+    public Response executeRequest(String method, String path, Map<String, String> additionalHeaders,
+        RequestBody requestBody) throws SpeedPixException {
         try {
             String url = buildUrl(path);
 
@@ -272,9 +339,9 @@ public class SpeedPixClient {
                         String errorBody = response.body().string();
                         // 尝试解析错误响应
                         Map<?, ?> errorData = objectMapper.readValue(errorBody, Map.class);
-                        String subErrMessage = (String) errorData.get("subErrMessage");
-                        String errMessage = (String) errorData.get("errMessage");
-                        String apiInvokeId = (String) errorData.get("apiInvokeId");
+                        String subErrMessage = (String)errorData.get("subErrMessage");
+                        String errMessage = (String)errorData.get("errMessage");
+                        String apiInvokeId = (String)errorData.get("apiInvokeId");
 
                         if (subErrMessage != null) {
                             errorMessage = subErrMessage;

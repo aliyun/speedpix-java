@@ -44,14 +44,48 @@ export SPEEDPIX_APP_SECRET="your-app-secret"
 
 ### 基础使用
 
+#### 方法 1：使用 ComfyPromptRequest（推荐）
+
 ```java
 import com.aliyun.speedpix.SpeedPixClient;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
 import java.util.HashMap;
 import java.util.Map;
 
 public class QuickStart {
     public static void main(String[] args) throws Exception {
         // 创建客户端（自动从环境变量读取配置）
+        SpeedPixClient client = new SpeedPixClient(null, null, null);
+
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("prompt", "A beautiful landscape");
+
+        // 使用Builder模式创建请求
+        ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
+            .inputs(input)
+            .aliasId("main")
+            .randomiseSeeds(true)
+            .build();
+
+        // 运行模型并获取结果
+        Object output = client.run(request);
+
+        System.out.println("结果: " + output);
+    }
+}
+```
+
+#### 方法 2：传统方式（向后兼容）
+
+```java
+import com.aliyun.speedpix.SpeedPixClient;
+import java.util.HashMap;
+import java.util.Map;
+
+public class TraditionalUsage {
+    public static void main(String[] args) throws Exception {
+        // 创建客户端
         SpeedPixClient client = new SpeedPixClient(null, null, null);
 
         // 准备输入参数
@@ -68,7 +102,65 @@ public class QuickStart {
 
 ## 详细使用方法
 
-### 方法 1：直接运行（推荐）
+### 方法 1：使用 ComfyPromptRequest Builder 模式（推荐）
+
+```java
+import com.aliyun.speedpix.SpeedPixClient;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+
+SpeedPixClient client = new SpeedPixClient(
+    "your-endpoint.com",
+    "your-app-key",
+    "your-app-secret"
+);
+
+Map<String, Object> input = new HashMap<>();
+input.put("prompt", "A magical forest");
+input.put("width", 1024);
+input.put("height", 1024);
+
+// 使用Builder模式创建请求
+ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
+    .inputs(input)
+    .aliasId("main")
+    .versionId("v1.0")
+    .randomiseSeeds(true)
+    .returnTempFiles(false)
+    .build();
+
+// 直接运行并获取结果
+Object output = client.run(request);
+
+// 或者指定resourceConfigId
+Object output2 = client.run(request, "gpu-config");
+
+// 不等待完成，后台运行
+Object prediction = client.run(request, "default", false, 1.0);
+```
+
+### 方法 1b：静态工厂方法
+
+```java
+import com.aliyun.speedpix.SpeedPix;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+
+// 设置默认客户端
+SpeedPix.setDefaultClient(new SpeedPixClient());
+
+// 创建请求
+ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
+    .inputs(input)
+    .aliasId("main")
+    .build();
+
+// 使用静态方法运行
+Object output = SpeedPix.run(request);
+
+// 或指定resourceConfigId
+Object output2 = SpeedPix.run(request, "gpu-config");
+```
+
+### 方法 2：传统方式（向后兼容）
 
 ```java
 import com.aliyun.speedpix.SpeedPixClient;
@@ -98,7 +190,7 @@ if (output instanceof List) {
 }
 ```
 
-### 方法 2：全局静态方法
+### 方法 3：全局静态方法（传统）
 
 ```java
 import com.aliyun.speedpix.SpeedPix;
@@ -116,7 +208,7 @@ Object output = SpeedPix.run("your-workflow-id", input, client);
 Object output2 = SpeedPix.run("your-workflow-id", input);
 ```
 
-### 方法 3：传统预测接口
+### 方法 4：传统预测接口（完全兼容）
 
 ```java
 import com.aliyun.speedpix.model.Prediction;
@@ -167,6 +259,50 @@ System.out.println("任务已创建: " + prediction.getId());
 prediction.reload();
 if (prediction.getTaskStatus().isFinished()) {
     System.out.println("任务完成: " + prediction.getOutput());
+}
+```
+
+### 方法 6：处理输出结果
+
+```java
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+
+SpeedPixClient client = new SpeedPixClient(null, null, null);
+
+Map<String, Object> input = new HashMap<>();
+input.put("prompt", "A futuristic city");
+
+ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
+    .inputs(input)
+    .aliasId("main")
+    .build();
+
+try {
+    // 运行并获取结果
+    Object output = client.run(request);
+
+    // 输出是 Map<String, Object> 类型，包含 comfy_get_result 的 result 结构
+    if (output instanceof Map) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> resultMap = (Map<String, Object>) output;
+
+        // 访问具体的结果数据
+        if (resultMap.containsKey("images")) {
+            System.out.println("生成的图片: " + resultMap.get("images"));
+        }
+
+        if (resultMap.containsKey("info")) {
+            System.out.println("信息: " + resultMap.get("info"));
+        }
+
+        // 遍历所有结果键值
+        resultMap.forEach((key, value) -> {
+            System.out.println(key + ": " + value);
+        });
+    }
+
+} catch (Exception e) {
+    System.err.println("运行失败: " + e.getMessage());
 }
 ```
 

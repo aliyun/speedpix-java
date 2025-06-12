@@ -2,6 +2,7 @@ package com.aliyun.speedpix.util;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -73,9 +74,7 @@ public class AuthUtils {
         // 生成签名
         String signatureString = String.join("\n", signatureParts);
         String signature = Base64.encodeBase64String(
-            HmacUtils.hmacSha256(appSecret.getBytes(StandardCharsets.UTF_8),
-                               signatureString.getBytes(StandardCharsets.UTF_8))
-        );
+            new HmacUtils(HmacAlgorithms.HMAC_SHA_256, appSecret).hmac(signatureString));
         headers.put("x-ca-signature", signature);
 
         // 合并自定义头信息

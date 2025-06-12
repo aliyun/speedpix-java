@@ -1,5 +1,6 @@
 package com.aliyun.speedpix.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Map;
 /**
  * 查询结果响应的数据部分
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ComfyResultResponseData {
 
     @JsonProperty("taskId")
@@ -73,15 +75,9 @@ public class ComfyResultResponseData {
     }
 
     /**
-     * 获取输出结果，优先使用 result，如果没有则使用 images
+     * 获取输出结果，直接返回 result 结构
      */
-    public Object getOutput() {
-        if (result != null) {
-            return result;
-        }
-        if (images != null) {
-            return images;
-        }
-        return null;
+    public Map<String, Object> getOutput() {
+        return result;
     }
 }
