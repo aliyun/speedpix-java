@@ -13,6 +13,7 @@
 - ⚡ **高性能** - 基于 OkHttp 的现代 HTTP 客户端
 - 📁 **文件上传** - 支持多种文件格式的上传功能
 - 🧪 **全面测试** - 包含单元测试和集成测试
+- 💾 **图像保存** - 直接将生成的图像保存到本地文件
 
 ## 安装
 
@@ -44,319 +45,519 @@ export SPEEDPIX_APP_SECRET="your-app-secret"
 
 ### 基础使用
 
-#### 方法 1：使用 ComfyPromptRequest（推荐）
+#### 方法 1：直接运行（推荐新手）
 
 ```java
 import com.aliyun.speedpix.SpeedPixClient;
 import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.Prediction;
+import com.aliyun.speedpix.model.ImageOutput;
 import java.util.HashMap;
 import java.util.Map;
+import java.io.IOException;
 
-public class QuickStart {
+public class BasicUsageExample {
+
+    // 定义结果数据结构
+    public static class ResultDTO {
+        private ImageOutput images;
+
+        public ImageOutput getImages() {
+            return images;
+        }
+
+        public void setImages(ImageOutput images) {
+            this.images = images;
+        }
+
+        @Override
+        public String toString() {
+            return "ResultDTO{images=" + images + '}';
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         // 创建客户端（自动从环境变量读取配置）
-        SpeedPixClient client = new SpeedPixClient(null, null, null);
+        SpeedPixClient client = new SpeedPixClient();
 
         // 准备输入参数
         Map<String, Object> input = new HashMap<>();
-        input.put("prompt", "A beautiful landscape");
+        input.put("image", "/path/to/your/input/image.png");
 
-        // 使用Builder模式创建请求
-        ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
-            .inputs(input)
+        // 直接运行并获取结果
+        Prediction<ResultDTO> result = client.run(ComfyPromptRequest.builder()
+            .workflowId("your_workflow_id")
             .aliasId("main")
-            .randomiseSeeds(true)
-            .build();
+            .inputs(input)
+            .build(), ResultDTO.class);
 
-        // 运行模型并获取结果
-        Object output = client.run(request);
+        System.out.println("输出结果: " + result);
 
-        System.out.println("结果: " + output);
+        // 保存生成的图像到本地
+        result.getOutput().getImages().save("result.png");
+
+        // 或者获取输入流进行其他处理
+        // InputStream inputStream = result.getOutput().getImages().getInputStream();
     }
 }
 ```
 
-#### 方法 2：传统方式（向后兼容）
+#### 方法 2：使用全局静态方法
 
 ```java
-import com.aliyun.speedpix.SpeedPixClient;
+import com.aliyun.speedpix.SpeedPix;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.Prediction;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TraditionalUsage {
+public class GlobalFunctionExample {
     public static void main(String[] args) throws Exception {
-        // 创建客户端
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/path/to/your/input/image.png");
+
+        // 使用全局 run 函数
+        Prediction<ResultDTO> output = SpeedPix.run(ComfyPromptRequest.builder()
+            .workflowId("your_workflow_id")
+            .aliasId("main")
+            .inputs(input)
+            .build(), ResultDTO.class);
+
+        System.out.println("输出结果: " + output);
+    }
+}
+```
+
+#### 方法 3：传统预测接口（完全控制）
+
+```java
+import com.aliyun.speedpix.SpeedPixClient;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.Prediction;
+import com.aliyun.speedpix.exception.PredictionException;
+import java.util.HashMap;
+import java.util.Map;
+
+public class TraditionalExample {
+    public static void main(String[] args) throws Exception {
         SpeedPixClient client = new SpeedPixClient(null, null, null);
 
         // 准备输入参数
         Map<String, Object> input = new HashMap<>();
-        input.put("prompt", "A beautiful landscape");
+        input.put("image", "/path/to/your/input/image.png");
 
-        // 运行模型并获取结果
-        Object output = client.run("your-workflow-id", input);
+        try {
+            // 创建预测任务
+            Prediction<ResultDTO> prediction = client.predictions().create(ComfyPromptRequest.builder()
+                .workflowId("your_workflow_id")
+                .aliasId("main")
+                .inputs(input)
+                .build(), ResultDTO.class);
+            System.out.println("创建预测任务: " + prediction.getId());
 
-        System.out.println("结果: " + output);
+            // 等待完成
+            prediction = prediction.waitForCompletion();
+            System.out.println("最终状态: " + prediction.getStatus());
+
+            if (prediction.getOutput() != null) {
+                System.out.println("输出结果: " + prediction.getOutput());
+            }
+
+        } catch (PredictionException e) {
+            System.err.println("模型执行失败: " + e.getMessage());
+            if (e.getPrediction() != null) {
+                System.err.println("预测 ID: " + e.getPrediction().getId());
+                System.err.println("错误详情: " + e.getPrediction().getError());
+            }
+        }
     }
 }
 ```
 
 ## 详细使用方法
 
-### 方法 1：使用 ComfyPromptRequest Builder 模式（推荐）
+### 自定义结果数据结构
+
+您可以定义自己的数据结构来接收 API 返回的结果：
 
 ```java
-import com.aliyun.speedpix.SpeedPixClient;
-import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.ImageOutput;
 
-SpeedPixClient client = new SpeedPixClient(
-    "your-endpoint.com",
-    "your-app-key",
-    "your-app-secret"
-);
+public class ResultDTO {
+    private ImageOutput images;
 
-Map<String, Object> input = new HashMap<>();
-input.put("prompt", "A magical forest");
-input.put("width", 1024);
-input.put("height", 1024);
-
-// 使用Builder模式创建请求
-ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
-    .inputs(input)
-    .aliasId("main")
-    .versionId("v1.0")
-    .randomiseSeeds(true)
-    .returnTempFiles(false)
-    .build();
-
-// 直接运行并获取结果
-Object output = client.run(request);
-
-// 或者指定resourceConfigId
-Object output2 = client.run(request, "gpu-config");
-
-// 不等待完成，后台运行
-Object prediction = client.run(request, "default", false, 1.0);
-```
-
-### 方法 1b：静态工厂方法
-
-```java
-import com.aliyun.speedpix.SpeedPix;
-import com.aliyun.speedpix.model.ComfyPromptRequest;
-
-// 设置默认客户端
-SpeedPix.setDefaultClient(new SpeedPixClient());
-
-// 创建请求
-ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
-    .inputs(input)
-    .aliasId("main")
-    .build();
-
-// 使用静态方法运行
-Object output = SpeedPix.run(request);
-
-// 或指定resourceConfigId
-Object output2 = SpeedPix.run(request, "gpu-config");
-```
-
-### 方法 2：传统方式（向后兼容）
-
-```java
-import com.aliyun.speedpix.SpeedPixClient;
-
-SpeedPixClient client = new SpeedPixClient(
-    "your-endpoint.com",
-    "your-app-key",
-    "your-app-secret"
-);
-
-Map<String, Object> input = new HashMap<>();
-input.put("prompt", "A magical forest");
-
-// 直接运行并获取结果
-Object output = client.run("your-workflow-id", input);
-
-// 处理不同类型的输出
-if (output instanceof List) {
-    // 多个输出文件
-    List<?> outputs = (List<?>) output;
-    for (int i = 0; i < outputs.size(); i++) {
-        System.out.println("输出 " + i + ": " + outputs.get(i));
+    public ImageOutput getImages() {
+        return images;
     }
-} else {
-    // 单个输出
-    System.out.println("结果: " + output);
+
+    public void setImages(ImageOutput images) {
+        this.images = images;
+    }
+
+    @Override
+    public String toString() {
+        return "ResultDTO{images=" + images + '}';
+    }
 }
 ```
 
-### 方法 3：全局静态方法（传统）
+### 方法 1：直接运行示例（推荐新手）
+
+```java
+import com.aliyun.speedpix.SpeedPixClient;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.Prediction;
+import java.io.IOException;
+
+public class DirectRunExample {
+    public static void main(String[] args) throws Exception {
+        // 创建客户端（自动从环境变量读取配置）
+        SpeedPixClient client = new SpeedPixClient();
+
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
+
+        // 直接运行并获取结果
+        Prediction<ResultDTO> result = client.run(ComfyPromptRequest.builder()
+            .workflowId("your_workflow_id")
+            .aliasId("main")
+            .inputs(input)
+            .build(), ResultDTO.class);
+
+        System.out.println("输出结果: " + result);
+
+        // 保存生成的图像
+        result.getOutput().getImages().save("result.png");
+
+        // 或者使用输入流进行其他处理
+        // InputStream stream = result.getOutput().getImages().getInputStream();
+    }
+}
+```
+
+### 方法 2：全局函数示例
 
 ```java
 import com.aliyun.speedpix.SpeedPix;
-
-// 使用自定义客户端
-SpeedPixClient client = new SpeedPixClient(null, null, null);
-
-Map<String, Object> input = new HashMap<>();
-input.put("prompt", "A magical forest");
-
-// 全局 run 方法
-Object output = SpeedPix.run("your-workflow-id", input, client);
-
-// 或者直接使用（需要设置环境变量）
-Object output2 = SpeedPix.run("your-workflow-id", input);
-```
-
-### 方法 4：传统预测接口（完全兼容）
-
-```java
+import com.aliyun.speedpix.model.ComfyPromptRequest;
 import com.aliyun.speedpix.model.Prediction;
 
-SpeedPixClient client = new SpeedPixClient(null, null, null);
+public class GlobalFunctionExample {
+    public static void main(String[] args) throws Exception {
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
 
-Map<String, Object> input = new HashMap<>();
-input.put("prompt", "A futuristic city");
+        // 使用全局 run 函数
+        Prediction<ResultDTO> output = SpeedPix.run(ComfyPromptRequest.builder()
+            .workflowId("01jvp41b358md06w46fz1yz78a")
+            .aliasId("main")
+            .inputs(input)
+            .build(), ResultDTO.class);
 
-try {
-    // 创建预测任务
-    Prediction prediction = client.predictions().create("your-workflow-id", input);
-    System.out.println("创建预测任务: " + prediction.getId());
-
-    // 等待完成
-    prediction = prediction.waitForCompletion();
-    System.out.println("最终状态: " + prediction.getStatus());
-
-    if (prediction.getOutput() != null) {
-        System.out.println("输出结果: " + prediction.getOutput());
-    }
-
-} catch (PredictionException e) {
-    System.err.println("模型执行失败: " + e.getMessage());
-    if (e.getPrediction() != null) {
-        System.err.println("预测 ID: " + e.getPrediction().getId());
-        System.err.println("错误详情: " + e.getPrediction().getError());
+        System.out.println("输出结果: " + output);
     }
 }
 ```
 
-### 方法 4：后台处理
+### 方法 3：传统预测接口示例
 
 ```java
-// 创建任务但不等待完成
-Object result = client.run(
-    "your-workflow-id",
-    input,
-    false, // wait = false
-    null, null, null, null, "default", 1.0
-);
-
-// 结果是 Prediction 对象，可以稍后检查状态
-Prediction prediction = (Prediction) result;
-System.out.println("任务已创建: " + prediction.getId());
-
-// 稍后手动检查状态
-prediction.reload();
-if (prediction.getTaskStatus().isFinished()) {
-    System.out.println("任务完成: " + prediction.getOutput());
-}
-```
-
-### 方法 6：处理输出结果
-
-```java
+import com.aliyun.speedpix.SpeedPixClient;
 import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.Prediction;
+import com.aliyun.speedpix.exception.PredictionException;
+import com.aliyun.speedpix.exception.SpeedPixException;
 
-SpeedPixClient client = new SpeedPixClient(null, null, null);
+public class TraditionalPredictionExample {
+    public static void main(String[] args) throws Exception {
+        SpeedPixClient client = new SpeedPixClient(null, null, null);
 
-Map<String, Object> input = new HashMap<>();
-input.put("prompt", "A futuristic city");
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
 
-ComfyPromptRequest request = ComfyPromptRequest.builder("your-workflow-id")
-    .inputs(input)
-    .aliasId("main")
-    .build();
+        try {
+            // 创建预测任务
+            Prediction<ResultDTO> prediction = client.predictions().create(ComfyPromptRequest.builder()
+                .workflowId("01jvp41b358md06w46fz1yz78a")
+                .aliasId("main")
+                .inputs(input)
+                .build(), ResultDTO.class);
+            System.out.println("创建预测任务: " + prediction.getId());
 
-try {
-    // 运行并获取结果
-    Object output = client.run(request);
+            // 等待完成
+            prediction = prediction.waitForCompletion();
+            System.out.println("最终状态: " + prediction.getStatus());
 
-    // 输出是 Map<String, Object> 类型，包含 comfy_get_result 的 result 结构
-    if (output instanceof Map) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> resultMap = (Map<String, Object>) output;
+            if (prediction.getOutput() != null) {
+                System.out.println("输出结果: " + prediction.getOutput());
+            }
 
-        // 访问具体的结果数据
-        if (resultMap.containsKey("images")) {
-            System.out.println("生成的图片: " + resultMap.get("images"));
+        } catch (PredictionException e) {
+            System.err.println("模型执行失败: " + e.getMessage());
+            if (e.getPrediction() != null) {
+                System.err.println("预测 ID: " + e.getPrediction().getId());
+                System.err.println("错误详情: " + e.getPrediction().getError());
+            }
+        } catch (SpeedPixException e) {
+            System.err.println("其他错误: " + e.getMessage());
         }
-
-        if (resultMap.containsKey("info")) {
-            System.out.println("信息: " + resultMap.get("info"));
-        }
-
-        // 遍历所有结果键值
-        resultMap.forEach((key, value) -> {
-            System.out.println(key + ": " + value);
-        });
     }
-
-} catch (Exception e) {
-    System.err.println("运行失败: " + e.getMessage());
 }
 ```
 
-### 使用 OutputConverterUtils 进行类型转换
-
-为了更方便地处理 API 返回的复杂输出数据，SDK 提供了 `OutputConverterUtils` 工具类，支持将输出转换为用户定义的数据结构：
+### ComfyPromptRequest Builder 模式详解
 
 ```java
-import com.aliyun.speedpix.util.OutputConverterUtils;
+ComfyPromptRequest request = ComfyPromptRequest.builder()
+    .workflowId("your-workflow-id")         // 必需：工作流ID
+    .aliasId("main")                        // 可选：别名ID
+    .versionId("v1.0")                      // 可选：版本ID
+    .inputs(inputMap)                       // 必需：输入参数
+    .randomiseSeeds(true)                   // 可选：是否随机化种子
+    .returnTempFiles(false)                 // 可选：是否返回临时文件
+    .build();
+```
+### 图像处理功能
 
-// 定义输出数据结构
-public class ImageGenerationResult {
-    private List<String> images;
-    private String status;
-    private int processTime;
+SpeedPix SDK 提供强大的图像处理功能，支持直接保存和流式处理：
 
-    // getters and setters...
+```java
+import com.aliyun.speedpix.model.ImageOutput;
+import java.io.InputStream;
+import java.io.FileOutputStream;
+
+// 运行图像处理工作流
+Prediction<ResultDTO> result = client.run(request, ResultDTO.class);
+
+// 方法 1：直接保存到文件
+result.getOutput().getImages().save("output.png");
+
+// 方法 2：获取输入流进行自定义处理
+try (InputStream inputStream = result.getOutput().getImages().getInputStream()) {
+    // 保存到自定义位置
+    try (FileOutputStream fos = new FileOutputStream("/custom/path/result.png")) {
+        inputStream.transferTo(fos);
+    }
 }
 
-// 运行工作流
-Prediction prediction = client.predictions().create("workflow-id", input);
+// 方法 3：获取图像数据进行进一步处理
+byte[] imageData = result.getOutput().getImages().getData();
+// 进行图像分析、压缩等操作...
+```
 
-// 转换为自定义对象
-ImageGenerationResult result = OutputConverterUtils.convertTo(prediction, ImageGenerationResult.class);
-System.out.println("生成状态: " + result.getStatus());
-System.out.println("处理时间: " + result.getProcessTime() + "ms");
+### 高级用法示例
 
-// 直接获取特定字段
-String status = OutputConverterUtils.getField(prediction, "status", String.class);
-List<String> images = OutputConverterUtils.getFieldAsList(prediction, "images", String.class);
+```java
+public class AdvancedExample {
+    public static void main(String[] args) throws Exception {
+        SpeedPixClient client = new SpeedPixClient();
 
-// 转换为 List（当整个输出是数组时）
-List<String> imageList = OutputConverterUtils.convertToList(prediction, String.class);
+        // 图像风格转换
+        Map<String, Object> styleTransferInput = new HashMap<>();
+        styleTransferInput.put("image", "/path/to/content/image.jpg");
+        styleTransferInput.put("style_image", "/path/to/style/image.jpg");
+        styleTransferInput.put("strength", 0.8);
 
-// 转换为 Map
-Map<String, String> metadata = OutputConverterUtils.convertToMap(prediction, String.class, String.class);
+        Prediction<ResultDTO> styleResult = client.run(ComfyPromptRequest.builder()
+            .workflowId("style-transfer-workflow")
+            .aliasId("main")
+            .inputs(styleTransferInput)
+            .build(), ResultDTO.class);
 
-// 检查输出是否为空
-if (OutputConverterUtils.isOutputEmpty(prediction)) {
-    System.out.println("输出为空");
+        styleResult.getOutput().getImages().save("styled_image.png");
+
+        // 图像超分辨率
+        Map<String, Object> upscaleInput = new HashMap<>();
+        upscaleInput.put("image", "/path/to/low/res/image.jpg");
+        upscaleInput.put("scale_factor", 4);
+
+        Prediction<ResultDTO> upscaleResult = client.run(ComfyPromptRequest.builder()
+            .workflowId("upscale-workflow")
+            .aliasId("main")
+            .inputs(upscaleInput)
+            .build(), ResultDTO.class);
+
+        upscaleResult.getOutput().getImages().save("upscaled_image.png");
+    }
 }
 ```
 
-#### OutputConverterUtils 主要方法
+## 完整示例
 
-- `convertTo(prediction, targetClass)` - 转换为指定类型对象
-- `convertToList(prediction, elementClass)` - 转换为指定元素类型的 List
-- `convertToMap(prediction, keyClass, valueClass)` - 转换为指定类型的 Map
-- `getField(prediction, fieldName, fieldClass)` - 获取特定字段并转换类型
-- `getFieldAsList(prediction, fieldName, elementClass)` - 获取字段作为 List
-- `isOutputEmpty(prediction)` - 检查输出是否为空
-- `convertFrom(dataMap, targetClass)` - 从原始 Map 转换（通用方法）
+基于 `BasicUsageExample.java` 的完整代码示例：
 
-更多使用示例请参考 `src/main/java/com/aliyun/speedpix/examples/OutputConverterExample.java`。
+```java
+package com.aliyun.speedpix.examples;
+
+import com.aliyun.speedpix.SpeedPix;
+import com.aliyun.speedpix.SpeedPixClient;
+import com.aliyun.speedpix.exception.PredictionException;
+import com.aliyun.speedpix.exception.SpeedPixException;
+import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.ImageOutput;
+import com.aliyun.speedpix.model.Prediction;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * SpeedPix Java SDK 基础使用示例
+ * 演示三种主要的使用方法
+ */
+public class BasicUsageExample {
+
+    // 定义结果数据结构
+    public static class ResultDTO {
+        private ImageOutput images;
+
+        public ImageOutput getImages() {
+            return images;
+        }
+
+        public void setImages(ImageOutput images) {
+            this.images = images;
+        }
+
+        @Override
+        public String toString() {
+            return "ResultDTO{images=" + images + '}';
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            // 方法 1：直接运行（推荐新手）
+            directRunExample();
+
+            // 方法 2：使用全局静态方法
+            globalFunctionExample();
+
+            // 方法 3：传统预测接口
+            traditionalPredictionExample();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 方法 1：直接运行示例
+     */
+    private static void directRunExample() throws SpeedPixException, InterruptedException, IOException {
+        System.out.println("=== 方法 1：直接运行示例 ===");
+
+        // 创建客户端（自动从环境变量读取配置）
+        SpeedPixClient client = new SpeedPixClient();
+
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
+
+        // 直接运行并获取结果
+        Prediction<ResultDTO> r = client.run(ComfyPromptRequest.builder()
+            .workflowId("01jvp41b358md06w46fz1yz78a")
+            .aliasId("main")
+            .inputs(input)
+            .build(), ResultDTO.class);
+
+        System.out.println("输出结果: " + r);
+
+        // 保存生成的图像
+        r.getOutput().getImages().save("result.png");
+
+        // 或者使用输入流: result.getImages().getInputStream()
+    }
+
+    /**
+     * 方法 2：全局函数示例
+     */
+    private static void globalFunctionExample() throws SpeedPixException, InterruptedException {
+        System.out.println("=== 方法 2：全局函数示例 ===");
+
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
+
+        // 使用全局 run 函数
+        Prediction<ResultDTO> output = SpeedPix.run(ComfyPromptRequest.builder()
+            .workflowId("01jvp41b358md06w46fz1yz78a")
+            .aliasId("main")
+            .inputs(input)
+            .build(), ResultDTO.class);
+
+        System.out.println("输出结果: " + output);
+    }
+
+    /**
+     * 方法 3：传统预测接口示例
+     */
+    private static void traditionalPredictionExample() throws SpeedPixException, InterruptedException {
+        System.out.println("=== 方法 3：传统预测接口示例 ===");
+
+        SpeedPixClient client = new SpeedPixClient(null, null, null);
+
+        // 准备输入参数
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
+
+        try {
+            // 创建预测任务
+            Prediction<ResultDTO> prediction = client.predictions().create(ComfyPromptRequest.builder()
+                .workflowId("01jvp41b358md06w46fz1yz78a")
+                .aliasId("main")
+                .inputs(input)
+                .build(), ResultDTO.class);
+            System.out.println("创建预测任务: " + prediction.getId());
+
+            // 等待完成
+            prediction = prediction.waitForCompletion();
+            System.out.println("最终状态: " + prediction.getStatus());
+
+            if (prediction.getOutput() != null) {
+                System.out.println("输出结果: " + prediction.getOutput());
+            }
+
+        } catch (PredictionException e) {
+            System.err.println("模型执行失败: " + e.getMessage());
+            if (e.getPrediction() != null) {
+                System.err.println("预测 ID: " + e.getPrediction().getId());
+                System.err.println("错误详情: " + e.getPrediction().getError());
+            }
+        } catch (SpeedPixException e) {
+            System.err.println("其他错误: " + e.getMessage());
+        }
+    }
+}
+```
+
+### 环境变量配置示例
+
+在项目根目录创建 `.env` 文件或设置系统环境变量：
+
+```bash
+# .env 文件或环境变量
+SPEEDPIX_ENDPOINT=your-endpoint.com
+SPEEDPIX_APP_KEY=your-app-key
+SPEEDPIX_APP_SECRET=your-app-secret
+```
+
+### 快速启动脚本
+
+```bash
+#!/bin/bash
+# 设置环境变量
+export SPEEDPIX_ENDPOINT="your-endpoint.com"
+export SPEEDPIX_APP_KEY="your-app-key"
+export SPEEDPIX_APP_SECRET="your-app-secret"
+
+# 编译并运行示例
+mvn compile exec:java -Dexec.mainClass="com.aliyun.speedpix.examples.BasicUsageExample"
+```
 
 ## 文件处理
 
@@ -411,32 +612,98 @@ SDK 自动检测文件类型，支持以下格式：
 
 ## 错误处理
 
+SpeedPix SDK 提供详细的错误处理机制，根据代码案例的最佳实践：
+
 ```java
 import com.aliyun.speedpix.exception.PredictionException;
 import com.aliyun.speedpix.exception.SpeedPixException;
 
-SpeedPixClient client = new SpeedPixClient(null, null, null);
+public class ErrorHandlingExample {
+    public static void main(String[] args) {
+        SpeedPixClient client = new SpeedPixClient(null, null, null);
 
-try {
-    Object output = client.run(
-        "your-workflow-id",
-        input
-    );
+        Map<String, Object> input = new HashMap<>();
+        input.put("image", "/Users/libin/Downloads/p850622.png");
 
-} catch (PredictionException e) {
-    System.err.println("模型执行失败: " + e.getMessage());
-    if (e.getPrediction() != null) {
-        System.err.println("预测 ID: " + e.getPrediction().getId());
-        System.err.println("错误详情: " + e.getPrediction().getError());
+        try {
+            // 创建预测任务
+            Prediction<ResultDTO> prediction = client.predictions().create(ComfyPromptRequest.builder()
+                .workflowId("01jvp41b358md06w46fz1yz78a")
+                .aliasId("main")
+                .inputs(input)
+                .build(), ResultDTO.class);
+            System.out.println("创建预测任务: " + prediction.getId());
+
+            // 等待完成
+            prediction = prediction.waitForCompletion();
+            System.out.println("最终状态: " + prediction.getStatus());
+
+            if (prediction.getOutput() != null) {
+                System.out.println("输出结果: " + prediction.getOutput());
+                // 保存结果
+                prediction.getOutput().getImages().save("result.png");
+            }
+
+        } catch (PredictionException e) {
+            // 模型执行失败
+            System.err.println("模型执行失败: " + e.getMessage());
+            if (e.getPrediction() != null) {
+                System.err.println("预测 ID: " + e.getPrediction().getId());
+                System.err.println("错误详情: " + e.getPrediction().getError());
+                System.err.println("预测状态: " + e.getPrediction().getStatus());
+            }
+        } catch (SpeedPixException e) {
+            // API 调用失败
+            System.err.println("其他错误: " + e.getMessage());
+            if (e.getErrorCode() != null) {
+                System.err.println("错误代码: " + e.getErrorCode());
+            }
+            if (e.getApiInvokeId() != null) {
+                System.err.println("API 调用 ID: " + e.getApiInvokeId());
+            }
+        } catch (InterruptedException e) {
+            // 等待被中断
+            System.err.println("操作被中断: " + e.getMessage());
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            // 文件保存失败
+            System.err.println("文件操作失败: " + e.getMessage());
+        } catch (Exception e) {
+            // 其他未知错误
+            System.err.println("未知错误: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### 简化的错误处理（用于直接运行方法）
+
+```java
+public class SimpleErrorHandling {
+    public static void main(String[] args) {
+        try {
+            // 方法 1：直接运行示例
+            directRunExample();
+
+            // 方法 2：全局函数示例
+            globalFunctionExample();
+
+            // 方法 3：传统预测接口
+            traditionalPredictionExample();
+
+        } catch (Exception e) {
+            System.err.println("执行失败: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-} catch (SpeedPixException e) {
-    System.err.println("API 错误: " + e.getMessage());
-    System.err.println("错误代码: " + e.getErrorCode());
-    System.err.println("API 调用 ID: " + e.getApiInvokeId());
+    private static void directRunExample() throws Exception {
+        SpeedPixClient client = new SpeedPixClient();
+        // ... 业务逻辑
+    }
 
-} catch (Exception e) {
-    System.err.println("其他错误: " + e.getMessage());
+    // ... 其他方法
 }
 ```
 
@@ -449,34 +716,89 @@ try {
 #### 构造函数
 
 ```java
-// 基础构造函数
-SpeedPixClient(String endpoint, String appKey, String appSecret)
+// 自动从环境变量读取配置（推荐）
+SpeedPixClient client = new SpeedPixClient();
 
-// 完整构造函数
-SpeedPixClient(String endpoint, String appKey, String appSecret, String userAgent, int timeoutSeconds)
+// 手动指定配置
+SpeedPixClient client = new SpeedPixClient(
+    "your-endpoint.com",
+    "your-app-key",
+    "your-app-secret"
+);
+
+// 传递 null 使用环境变量（向后兼容）
+SpeedPixClient client = new SpeedPixClient(null, null, null);
 ```
 
-#### 方法
+#### 主要方法
 
-- `run(workflowId, input)` - 直接运行模型（推荐）
-- `run(workflowId, input, wait, ...)` - 运行模型（完整参数）
-- `predictions()` - 获取预测服务
-- `files()` - 获取文件服务
+```java
+// 方法 1：直接运行（推荐）
+Prediction<T> run(ComfyPromptRequest request, Class<T> outputType)
 
-### PredictionsService
+// 方法 2：全局函数
+SpeedPix.run(ComfyPromptRequest request, Class<T> outputType)
 
-- `create(workflowId, input, ...)` - 创建预测任务
-- `get(predictionId)` - 获取预测状态
-- `cancel(predictionId)` - 取消预测任务
+// 方法 3：传统预测接口
+client.predictions().create(ComfyPromptRequest request, Class<T> outputType)
+```
 
-### FilesService
+### ComfyPromptRequest
 
-- `create(file)` - 上传文件
+工作流请求构建器：
 
-### 静态方法
+```java
+ComfyPromptRequest request = ComfyPromptRequest.builder()
+    .workflowId("your-workflow-id")    // 必需：工作流ID
+    .aliasId("main")                   // 可选：别名ID，默认 "main"
+    .inputs(inputMap)                  // 必需：输入参数 Map
+    .randomiseSeeds(true)              // 可选：随机化种子
+    .returnTempFiles(false)            // 可选：返回临时文件
+    .build();
+```
 
-- `SpeedPix.run(workflowId, input)` - 全局运行方法
-- `SpeedPix.run(workflowId, input, client)` - 使用指定客户端运行
+### Prediction<T>
+
+预测结果对象：
+
+```java
+// 获取预测状态
+String status = prediction.getStatus();
+String id = prediction.getId();
+
+// 获取输出结果
+T output = prediction.getOutput();
+
+// 等待完成（仅在传统方法中需要）
+prediction = prediction.waitForCompletion();
+```
+
+### ImageOutput
+
+图像输出处理：
+
+```java
+ImageOutput images = result.getOutput().getImages();
+
+// 保存到文件
+images.save("output.png");
+
+// 获取输入流
+InputStream stream = images.getInputStream();
+
+// 获取原始数据
+byte[] data = images.getData();
+```
+
+### 静态工厂方法
+
+```java
+// SpeedPix 全局方法
+import com.aliyun.speedpix.SpeedPix;
+
+// 使用默认客户端（需要设置环境变量）
+Prediction<ResultDTO> result = SpeedPix.run(request, ResultDTO.class);
+```
 
 ## 开发
 
