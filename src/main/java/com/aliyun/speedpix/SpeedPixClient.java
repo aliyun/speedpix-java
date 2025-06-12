@@ -97,29 +97,33 @@ public class SpeedPixClient {
     /**
      * 运行模型并返回结果
      */
-    public Prediction run(String workflowId, Map<String, Object> input) throws SpeedPixException, InterruptedException {
-        return run(workflowId, input, true, null, "main", null, null, "default", 1.0);
+    public <T> Prediction<T> run(String workflowId, Map<String, Object> input, Class<T> targetClass)
+        throws SpeedPixException,
+        InterruptedException {
+        return run(workflowId, input, true, null, "main", null, null, "default", 1.0, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用ComfyPromptRequest）
      */
-    public Prediction run(ComfyPromptRequest request) throws SpeedPixException, InterruptedException {
-        return run(request, "default", true, 1.0);
-    }
-
-    /**
-     * 运行模型并返回结果（使用ComfyPromptRequest）
-     */
-    public Prediction run(ComfyPromptRequest request, String resourceConfigId)
+    public <T> Prediction<T> run(ComfyPromptRequest request, Class<T> targetClass)
         throws SpeedPixException, InterruptedException {
-        return run(request, resourceConfigId, true, 1.0);
+        return run(request, "default", true, 1.0, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用ComfyPromptRequest）
      */
-    public Prediction run(ComfyPromptRequest request, String resourceConfigId, boolean wait, double pollingInterval)
+    public <T> Prediction<T> run(ComfyPromptRequest request, String resourceConfigId, Class<T> targetClass)
+        throws SpeedPixException, InterruptedException {
+        return run(request, resourceConfigId, true, 1.0, targetClass);
+    }
+
+    /**
+     * 运行模型并返回结果（使用ComfyPromptRequest）
+     */
+    public <T> Prediction<T> run(ComfyPromptRequest request, String resourceConfigId, boolean wait,
+        double pollingInterval, Class<T> targetClass)
         throws SpeedPixException, InterruptedException {
         // 创建预测任务
         Prediction prediction = predictionsService.create(request, resourceConfigId);
@@ -131,7 +135,7 @@ public class SpeedPixClient {
         // 等待完成 - 直接在客户端中实现等待逻辑
         while (!prediction.isFinished()) {
             Thread.sleep((long)(pollingInterval * 1000));
-            prediction = predictionsService.get(prediction.getId());
+            prediction = predictionsService.get(prediction.getId(), targetClass);
         }
 
         if (prediction.getError() != null) {
@@ -144,7 +148,7 @@ public class SpeedPixClient {
     /**
      * 运行模型并返回结果（兼容性方法）
      */
-    public Prediction run(
+    public <T> Prediction<T> run(
         String workflowId,
         Map<String, Object> input,
         boolean wait,
@@ -153,7 +157,9 @@ public class SpeedPixClient {
         Boolean randomiseSeeds,
         Boolean returnTempFiles,
         String resourceConfigId,
-        double pollingInterval) throws SpeedPixException, InterruptedException {
+        double pollingInterval,
+        Class<T> targetClass
+    ) throws SpeedPixException, InterruptedException {
 
         // 使用Builder模式创建ComfyPromptRequest
         ComfyPromptRequest request = ComfyPromptRequest.builder(workflowId)
@@ -164,14 +170,7 @@ public class SpeedPixClient {
             .returnTempFiles(returnTempFiles)
             .build();
 
-        return run(request, resourceConfigId, wait, pollingInterval);
-    }
-
-    /**
-     * 发送 GET 请求
-     */
-    public <T> T get(String path, Class<T> responseClass) throws SpeedPixException {
-        return request("GET", path, null, responseClass);
+        return run(request, resourceConfigId, wait, pollingInterval, targetClass);
     }
 
     /**

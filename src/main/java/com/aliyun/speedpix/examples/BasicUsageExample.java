@@ -63,13 +63,13 @@ public class BasicUsageExample {
         input.put("image", "/Users/libin/Downloads/p850622.png");
 
         // 直接运行并获取结果
-        Prediction output = client.run(ComfyPromptRequest.builder()
+        Prediction<ResultDTO> r = client.run(ComfyPromptRequest.builder()
             .workflowId("01jvp41b358md06w46fz1yz78a")
             .aliasId("main")
             .inputs(input)
-            .build());
-        ResultDTO result = OutputConverterUtils.convertTo(output.getOutput(), ResultDTO.class);
-        result.getImages().save("result.png");
+            .build(), ResultDTO.class);
+        System.out.println("输出结果: " + r);
+        r.getOutput().getImages().save("result.png");
         // or write to another stream using inputStream result.getImages().getInputStream()
     }
 
@@ -84,11 +84,11 @@ public class BasicUsageExample {
         input.put("image", "/Users/libin/Downloads/p850622.png");
 
         // 使用全局 run 函数
-        Prediction output = SpeedPix.run(ComfyPromptRequest.builder()
+        Prediction<ResultDTO> output = SpeedPix.run(ComfyPromptRequest.builder()
             .workflowId("01jvp41b358md06w46fz1yz78a")
             .aliasId("main")
             .inputs(input)
-            .build());
+            .build(), ResultDTO.class);
 
         System.out.println("输出结果: " + output);
     }

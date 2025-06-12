@@ -1,6 +1,7 @@
 package com.aliyun.speedpix.model;
 
 import com.aliyun.speedpix.exception.SpeedPixException;
+import com.aliyun.speedpix.util.OutputConverterUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,13 +12,14 @@ import java.util.Map;
  * 表示在 SpeedPix 上运行工作流的结果
  * 字段定义参考其他语言 SDK 保持一致性
  */
-public class Prediction {
+public class Prediction<T> {
 
     // 核心字段 - 与其他语言 SDK 保持一致
     private String id;
     private String status; // "waiting", "running", "succeeded", "failed", "canceled"
     private Map<String, Object> input;
-    private Map<String, Object> output; // 对应 comfy_get_result 的 result 字段
+    private T output; // 对应 comfy_get_result 的 result 字段
+    private transient Class<T> typeClass;
     private String error;
     private String errorCode;
     private String invokeId;
@@ -73,30 +75,11 @@ public class Prediction {
         this.input = input;
     }
 
-    public Map<String, Object> getOutput() {
+    public T getOutput() {
         return output;
     }
 
-    public void setOutput(Object output) {
-        // 如果输出是 Map 类型，直接赋值；否则尝试转换或设置为 null
-        if (output instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> mapOutput = (Map<String, Object>)output;
-            this.output = mapOutput;
-        } else if (output == null) {
-            this.output = null;
-        } else {
-            // 对于其他类型，为了向后兼容，可以创建一个包装 Map
-            Map<String, Object> wrapperMap = new HashMap<>();
-            wrapperMap.put("value", output);
-            this.output = wrapperMap;
-        }
-    }
-
-    /**
-     * 直接设置输出为 Map 类型
-     */
-    public void setOutput(Map<String, Object> output) {
+    public void setOutput(T output) {
         this.output = output;
     }
 
@@ -160,7 +143,7 @@ public class Prediction {
      * 等待预测完成的简化版本（保留向后兼容性）
      * 注意：建议使用 waitForOutput() 方法替代
      */
-    public Prediction waitForCompletion() throws InterruptedException {
+    public Prediction<T> waitForCompletion() throws InterruptedException {
         return waitForCompletion(1.0);
     }
 
@@ -171,7 +154,7 @@ public class Prediction {
      * @param pollingInterval 轮询间隔（秒）
      */
 
-    public Prediction waitForCompletion(double pollingInterval) throws InterruptedException {
+    public Prediction<T> waitForCompletion(double pollingInterval) throws InterruptedException {
         try {
             while (!isFinished()) {
                 Thread.sleep((long)(pollingInterval * 1000));
@@ -203,17 +186,15 @@ public class Prediction {
             Object predictionsService = clientClass.getMethod("predictions").invoke(client);
 
             // 调用 get 方法获取最新状态
-            Prediction updated = (Prediction)predictionsService.getClass()
-                .getMethod("get", String.class)
-                .invoke(predictionsService, this.id);
+            Prediction<T> updated = (Prediction<T>)predictionsService.getClass()
+                .getMethod("get", String.class, Class.class)
+                .invoke(predictionsService, this.id, typeClass);
 
             // 更新当前对象的状态
             this.status = updated.getStatus();
             this.error = updated.getError();
             this.errorCode = updated.getErrorCode();
             this.invokeId = updated.getInvokeId();
-
-            // 设置输出时自动进行 URL 转换
             this.setOutput(updated.getOutput());
 
         } catch (Exception e) {

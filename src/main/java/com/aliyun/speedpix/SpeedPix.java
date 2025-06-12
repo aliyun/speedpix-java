@@ -33,58 +33,60 @@ public class SpeedPix {
     /**
      * 运行模型并返回结果（使用ComfyPromptRequest和默认客户端）
      */
-    public static Prediction run(ComfyPromptRequest request) throws SpeedPixException, InterruptedException {
-        return getDefaultClient().run(request);
+    public static <T> Prediction<T> run(ComfyPromptRequest request, Class<T> targetClass) throws SpeedPixException,
+        InterruptedException {
+        return getDefaultClient().run(request, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用ComfyPromptRequest和指定客户端）
      */
-    public static Prediction run(ComfyPromptRequest request, SpeedPixClient client)
-            throws SpeedPixException, InterruptedException {
-        return client.run(request);
+    public static <T> Prediction<T> run(ComfyPromptRequest request, SpeedPixClient client, Class<T> targetClass)
+        throws SpeedPixException, InterruptedException {
+        return client.run(request, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用ComfyPromptRequest，支持resourceConfigId）
      */
-    public static Prediction run(ComfyPromptRequest request, String resourceConfigId)
-            throws SpeedPixException, InterruptedException {
-        return getDefaultClient().run(request, resourceConfigId);
+    public static <T> Prediction<T> run(ComfyPromptRequest request, String resourceConfigId, Class<T> targetClass)
+        throws SpeedPixException, InterruptedException {
+        return getDefaultClient().run(request, resourceConfigId, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用默认客户端）
      */
-    public static Prediction run(String workflowId, Map<String, Object> input)
-            throws SpeedPixException, InterruptedException {
-        return getDefaultClient().run(workflowId, input);
+    public static <T> Prediction<T> run(String workflowId, Map<String, Object> input, Class<T> targetClass)
+        throws SpeedPixException, InterruptedException {
+        return getDefaultClient().run(workflowId, input, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用指定客户端）
      */
-    public static Prediction run(String workflowId, Map<String, Object> input, SpeedPixClient client)
-            throws SpeedPixException, InterruptedException {
-        return client.run(workflowId, input);
+    public static <T> Prediction<T> run(String workflowId, Map<String, Object> input, SpeedPixClient client,
+        Class<T> targetClass)
+        throws SpeedPixException, InterruptedException {
+        return client.run(workflowId, input, targetClass);
     }
 
     /**
      * 运行模型并返回结果（使用默认客户端，支持完整参数）
      */
-    public static Prediction run(
-            String workflowId,
-            Map<String, Object> input,
-            boolean wait,
-            String versionId,
-            String aliasId,
-            Boolean randomiseSeeds,
-            Boolean returnTempFiles,
-            String resourceConfigId,
-            double pollingInterval) throws SpeedPixException, InterruptedException {
+    public static <T> Prediction<T> run(
+        String workflowId,
+        Map<String, Object> input,
+        boolean wait,
+        String versionId,
+        String aliasId,
+        Boolean randomiseSeeds,
+        Boolean returnTempFiles,
+        String resourceConfigId,
+        double pollingInterval, Class<T> targetClass) throws SpeedPixException, InterruptedException {
 
         return getDefaultClient().run(
-                workflowId, input, wait, versionId, aliasId,
-                randomiseSeeds, returnTempFiles, resourceConfigId, pollingInterval);
+            workflowId, input, wait, versionId, aliasId,
+            randomiseSeeds, returnTempFiles, resourceConfigId, pollingInterval, targetClass);
     }
 }

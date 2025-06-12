@@ -34,4 +34,13 @@ public class SpeedPixException extends Exception {
     public String getApiInvokeId() {
         return apiInvokeId;
     }
+
+    @Override
+    public String toString() {
+        return "SpeedPixException{" +
+            "message='" + getMessage() + '\'' +
+            ", errorCode='" + errorCode + '\'' +
+            ", apiInvokeId='" + apiInvokeId + '\'' +
+            '}';
+    }
 }
