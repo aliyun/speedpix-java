@@ -132,6 +132,14 @@ public class Prediction<T> {
         this.aliasId = aliasId;
     }
 
+    public Class<T> getTypeClass() {
+        return typeClass;
+    }
+
+    public void setTypeClass(Class<T> typeClass) {
+        this.typeClass = typeClass;
+    }
+
     /**
      * 检查任务是否已完成
      */
@@ -186,8 +194,9 @@ public class Prediction<T> {
             Object predictionsService = clientClass.getMethod("predictions").invoke(client);
 
             // 调用 get 方法获取最新状态
+            @SuppressWarnings("unchecked")
             Prediction<T> updated = (Prediction<T>)predictionsService.getClass()
-                .getMethod("get", String.class, Class.class)
+                .getMethod("get", String.class, typeClass.getClass())
                 .invoke(predictionsService, this.id, typeClass);
 
             // 更新当前对象的状态

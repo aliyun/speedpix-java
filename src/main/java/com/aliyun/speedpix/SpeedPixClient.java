@@ -126,7 +126,7 @@ public class SpeedPixClient {
         double pollingInterval, Class<T> targetClass)
         throws SpeedPixException, InterruptedException {
         // 创建预测任务
-        Prediction prediction = predictionsService.create(request, resourceConfigId);
+        Prediction<T> prediction = predictionsService.create(request, resourceConfigId, targetClass);
 
         if (!wait) {
             return prediction;

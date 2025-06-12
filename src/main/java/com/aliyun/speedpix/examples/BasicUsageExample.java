@@ -31,6 +31,13 @@ public class BasicUsageExample {
 
         public ResultDTO() {
         }
+
+        @Override
+        public String toString() {
+            return "ResultDTO{" +
+                "images=" + images +
+                '}';
+        }
     }
 
     public static void main(String[] args) {
@@ -107,11 +114,11 @@ public class BasicUsageExample {
 
         try {
             // 创建预测任务
-            Prediction prediction = client.predictions().create(ComfyPromptRequest.builder()
+            Prediction<ResultDTO> prediction = client.predictions().create(ComfyPromptRequest.builder()
                 .workflowId("01jvp41b358md06w46fz1yz78a")
                 .aliasId("main")
                 .inputs(input)
-                .build());
+                .build(), ResultDTO.class);
             System.out.println("创建预测任务: " + prediction.getId());
 
             // 等待完成

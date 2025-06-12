@@ -23,14 +23,15 @@ public class PredictionsService {
     /**
      * 创建预测任务
      */
-    public Prediction create(ComfyPromptRequest request) throws SpeedPixException {
-        return create(request, "default");
+    public <T> Prediction<T> create(ComfyPromptRequest request, Class<T> targetClass) throws SpeedPixException {
+        return create(request, "default", targetClass);
     }
 
     /**
      * 创建预测任务
      */
-    public Prediction create(ComfyPromptRequest request, String resourceConfigId) throws SpeedPixException {
+    public <T> Prediction<T> create(ComfyPromptRequest request, String resourceConfigId, Class<T> targetClass)
+        throws SpeedPixException {
         // 验证请求参数
         if (request == null) {
             throw new SpeedPixException("ComfyPromptRequest is required");
@@ -74,7 +75,7 @@ public class PredictionsService {
         }
 
         // 构建 Prediction 对象
-        Prediction prediction = new Prediction();
+        Prediction<T> prediction = new Prediction<T>();
         prediction.setId(response.getData().getTaskId());
         prediction.setStatus(response.getData().getStatus());
         prediction.setInput(request.getInputs());
@@ -84,27 +85,34 @@ public class PredictionsService {
         prediction.setWorkflowId(request.getWorkflowId());
         prediction.setAliasId(request.getAliasId());
 
+        // 设置目标类型类，用于后续的reload操作
+        if (targetClass != null) {
+            prediction.setTypeClass(targetClass);
+        }
+
         return prediction;
     }
 
     /**
      * 创建预测任务（向后兼容）
      */
-    public Prediction create(String workflowId, Map<String, Object> input) throws SpeedPixException {
-        return create(workflowId, input, null, null, null, null, "default");
+    public <T> Prediction<T> create(String workflowId, Map<String, Object> input, Class<T> targetClass)
+        throws SpeedPixException {
+        return create(workflowId, input, null, null, null, null, "default", targetClass);
     }
 
     /**
      * 创建预测任务（向后兼容）
      */
-    public Prediction create(
+    public <T> Prediction<T> create(
         String workflowId,
         Map<String, Object> input,
         String versionId,
         String aliasId,
         Boolean randomiseSeeds,
         Boolean returnTempFiles,
-        String resourceConfigId) throws SpeedPixException {
+        String resourceConfigId,
+        Class<T> targetClass) throws SpeedPixException {
 
         // 使用Builder模式创建ComfyPromptRequest
         ComfyPromptRequest request = ComfyPromptRequest.builder(workflowId)
@@ -115,7 +123,7 @@ public class PredictionsService {
             .returnTempFiles(returnTempFiles)
             .build();
 
-        return create(request, resourceConfigId);
+        return create(request, resourceConfigId, targetClass);
     }
 
     /**
@@ -169,7 +177,7 @@ public class PredictionsService {
     /**
      * 取消预测任务
      */
-    public Prediction cancel(String predictionId) throws SpeedPixException {
+    public <T> Prediction<T> cancel(String predictionId) throws SpeedPixException {
         throw new SpeedPixException("Cancel operation is not implemented yet");
     }
 }
