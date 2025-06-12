@@ -5,8 +5,11 @@ import com.aliyun.speedpix.SpeedPixClient;
 import com.aliyun.speedpix.exception.PredictionException;
 import com.aliyun.speedpix.exception.SpeedPixException;
 import com.aliyun.speedpix.model.ComfyPromptRequest;
+import com.aliyun.speedpix.model.ImageOutput;
 import com.aliyun.speedpix.model.Prediction;
+import com.aliyun.speedpix.util.OutputConverterUtils;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +17,21 @@ import java.util.Map;
  * 基础使用示例
  */
 public class BasicUsageExample {
+
+    public static class ResultDTO {
+        private ImageOutput images;
+
+        public ImageOutput getImages() {
+            return images;
+        }
+
+        public void setImages(ImageOutput images) {
+            this.images = images;
+        }
+
+        public ResultDTO() {
+        }
+    }
 
     public static void main(String[] args) {
         try {
@@ -34,7 +52,7 @@ public class BasicUsageExample {
     /**
      * 方法 1：直接运行示例
      */
-    private static void directRunExample() throws SpeedPixException, InterruptedException {
+    private static void directRunExample() throws SpeedPixException, InterruptedException, IOException {
         System.out.println("=== 方法 1：直接运行示例 ===");
 
         // 创建客户端（自动从环境变量读取配置）
@@ -45,13 +63,14 @@ public class BasicUsageExample {
         input.put("image", "/Users/libin/Downloads/p850622.png");
 
         // 直接运行并获取结果
-        Object output = client.run(ComfyPromptRequest.builder()
+        Prediction output = client.run(ComfyPromptRequest.builder()
             .workflowId("01jvp41b358md06w46fz1yz78a")
             .aliasId("main")
             .inputs(input)
             .build());
-
-        System.out.println("输出结果: " + output);
+        ResultDTO result = OutputConverterUtils.convertTo(output.getOutput(), ResultDTO.class);
+        result.getImages().save("result.png");
+        // or write to another stream using inputStream result.getImages().getInputStream()
     }
 
     /**
@@ -65,7 +84,7 @@ public class BasicUsageExample {
         input.put("image", "/Users/libin/Downloads/p850622.png");
 
         // 使用全局 run 函数
-        Object output = SpeedPix.run(ComfyPromptRequest.builder()
+        Prediction output = SpeedPix.run(ComfyPromptRequest.builder()
             .workflowId("01jvp41b358md06w46fz1yz78a")
             .aliasId("main")
             .inputs(input)

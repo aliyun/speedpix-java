@@ -306,6 +306,58 @@ try {
 }
 ```
 
+### 使用 OutputConverterUtils 进行类型转换
+
+为了更方便地处理 API 返回的复杂输出数据，SDK 提供了 `OutputConverterUtils` 工具类，支持将输出转换为用户定义的数据结构：
+
+```java
+import com.aliyun.speedpix.util.OutputConverterUtils;
+
+// 定义输出数据结构
+public class ImageGenerationResult {
+    private List<String> images;
+    private String status;
+    private int processTime;
+
+    // getters and setters...
+}
+
+// 运行工作流
+Prediction prediction = client.predictions().create("workflow-id", input);
+
+// 转换为自定义对象
+ImageGenerationResult result = OutputConverterUtils.convertTo(prediction, ImageGenerationResult.class);
+System.out.println("生成状态: " + result.getStatus());
+System.out.println("处理时间: " + result.getProcessTime() + "ms");
+
+// 直接获取特定字段
+String status = OutputConverterUtils.getField(prediction, "status", String.class);
+List<String> images = OutputConverterUtils.getFieldAsList(prediction, "images", String.class);
+
+// 转换为 List（当整个输出是数组时）
+List<String> imageList = OutputConverterUtils.convertToList(prediction, String.class);
+
+// 转换为 Map
+Map<String, String> metadata = OutputConverterUtils.convertToMap(prediction, String.class, String.class);
+
+// 检查输出是否为空
+if (OutputConverterUtils.isOutputEmpty(prediction)) {
+    System.out.println("输出为空");
+}
+```
+
+#### OutputConverterUtils 主要方法
+
+- `convertTo(prediction, targetClass)` - 转换为指定类型对象
+- `convertToList(prediction, elementClass)` - 转换为指定元素类型的 List
+- `convertToMap(prediction, keyClass, valueClass)` - 转换为指定类型的 Map
+- `getField(prediction, fieldName, fieldClass)` - 获取特定字段并转换类型
+- `getFieldAsList(prediction, fieldName, elementClass)` - 获取字段作为 List
+- `isOutputEmpty(prediction)` - 检查输出是否为空
+- `convertFrom(dataMap, targetClass)` - 从原始 Map 转换（通用方法）
+
+更多使用示例请参考 `src/main/java/com/aliyun/speedpix/examples/OutputConverterExample.java`。
+
 ## 文件处理
 
 SpeedPix SDK 提供完整的文件处理功能，支持文件上传和多种输入格式：
