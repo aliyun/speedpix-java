@@ -21,7 +21,7 @@
 
 ```xml
 <dependency>
-    <groupId>com.aliyun</groupId>
+    <groupId>io.github.speedpix</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -30,7 +30,7 @@
 ### Gradle
 
 ```gradle
-implementation 'com.aliyun:speedpix-java:1.0.0'
+implementation 'io.github.speedpix:speedpix-java:1.0.0'
 ```
 
 ## 快速开始
@@ -820,6 +820,10 @@ mvn package
 mvn install
 ```
 
+### 发布到 Maven 中央仓库
+
+如需发布新版本到 Maven 中央仓库，请参考 [PUBLISHING.md](PUBLISHING.md) 获取详细指南。
+
 ## 系统要求
 
 - Java 8 或更高版本
@@ -832,3 +836,246 @@ MIT License
 ## 获取帮助
 
 如有任何问题或需要技术支持，请联系智作工坊团队。
+
+## Maven 中央仓库发布
+
+### 发布到 Maven 中央仓库的完整指南
+
+SpeedPix Java SDK 可以发布到 Maven 中央仓库，让全球开发者都能方便地使用。以下是详细的发布流程：
+
+#### 1. 准备工作
+
+##### 1.1 注册 Sonatype JIRA 账户
+1. 访问 [Sonatype JIRA](https://issues.sonatype.org)
+2. 创建账户并登录
+3. 创建一个新的项目票据 (New Project ticket)
+4. 选择 "Community Support - Open Source Project Repository Hosting"
+
+##### 1.2 验证域名所有权
+如果使用 `com.aliyun` groupId，需要验证对 `aliyun.com` 域名的控制权：
+- 通过 DNS TXT 记录验证
+- 或通过在域名下创建指定的重定向页面
+
+##### 1.3 GPG 密钥设置
+```bash
+# 生成 GPG 密钥对
+gpg --gen-key
+
+# 列出密钥
+gpg --list-keys
+
+# 导出公钥到密钥服务器
+gpg --keyserver hkp://pool.sks-keyservers.net --send-keys YOUR_KEY_ID
+
+# 导出私钥（用于签名）
+gpg --export-secret-keys YOUR_KEY_ID > private-key.gpg
+```
+
+#### 2. 配置 Maven 设置
+
+##### 2.1 更新 `~/.m2/settings.xml`
+```xml
+<settings>
+    <servers>
+        <server>
+            <id>ossrh</id>
+            <username>YOUR_SONATYPE_USERNAME</username>
+            <password>YOUR_SONATYPE_PASSWORD</password>
+        </server>
+    </servers>
+
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <gpg.executable>gpg</gpg.executable>
+                <gpg.passphrase>YOUR_GPG_PASSPHRASE</gpg.passphrase>
+            </properties>
+        </profile>
+    </profiles>
+</settings>
+```
+
+##### 2.2 更新项目 `pom.xml`
+需要在当前 pom.xml 中添加发布相关的配置：
+
+```xml
+<!-- 添加到 pom.xml 的 <build><plugins> 部分 -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-gpg-plugin</artifactId>
+    <version>3.1.0</version>
+    <executions>
+        <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>sign</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+<plugin>
+    <groupId>org.sonatype.plugins</groupId>
+    <artifactId>nexus-staging-maven-plugin</artifactId>
+    <version>1.6.13</version>
+    <extensions>true</extensions>
+    <configuration>
+        <serverId>ossrh</serverId>
+        <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+        <autoReleaseAfterClose>true</autoReleaseAfterClose>
+    </configuration>
+</plugin>
+```
+
+```xml
+<!-- 添加到 pom.xml 根节点 -->
+<distributionManagement>
+    <snapshotRepository>
+        <id>ossrh</id>
+        <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+        <id>ossrh</id>
+        <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+</distributionManagement>
+```
+
+#### 3. 发布流程
+
+##### 3.1 版本管理
+```bash
+# 准备发布版本
+mvn versions:set -DnewVersion=1.0.0
+
+# 提交版本变更
+git add pom.xml
+git commit -m "Release version 1.0.0"
+git tag v1.0.0
+```
+
+##### 3.2 执行发布
+```bash
+# 清理并测试
+mvn clean test
+
+# 部署到 Sonatype
+mvn clean deploy -P ossrh
+
+# 或者使用发布插件（推荐）
+mvn clean deploy -P release
+```
+
+##### 3.3 发布到中央仓库
+1. 登录 [Sonatype Nexus Repository Manager](https://s01.oss.sonatype.org/)
+2. 在 "Staging Repositories" 中找到您的仓库
+3. 选择仓库并点击 "Close"
+4. 等待验证完成后，点击 "Release"
+
+#### 4. 自动化发布 (GitHub Actions)
+
+创建 `.github/workflows/release.yml`：
+
+```yaml
+name: Release to Maven Central
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Set up Maven settings
+        uses: s4u/maven-settings-action@v2.8.0
+        with:
+          servers: |
+            [{
+              "id": "ossrh",
+              "username": "${{ secrets.SONATYPE_USERNAME }}",
+              "password": "${{ secrets.SONATYPE_PASSWORD }}"
+            }]
+
+      - name: Deploy to Maven Central
+        run: mvn clean deploy -P ossrh
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+```
+
+#### 5. 验证发布
+
+发布成功后，可以通过以下方式验证：
+
+```bash
+# 搜索您的包
+curl "https://search.maven.org/solrsearch/select?q=g:com.aliyun+AND+a:speedpix-java"
+
+# 检查版本信息
+curl "https://repo1.maven.org/maven2/com/aliyun/speedpix-java/maven-metadata.xml"
+```
+
+#### 6. 发布清单
+
+在发布之前，请确认以下清单：
+
+- [ ] ✅ 所有测试通过 (`mvn test`)
+- [ ] ✅ 代码覆盖率达标
+- [ ] ✅ 文档完整且更新
+- [ ] ✅ 版本号符合语义化版本规范
+- [ ] ✅ GPG 密钥已配置并能正常签名
+- [ ] ✅ Sonatype 账户权限正确
+- [ ] ✅ `pom.xml` 包含所有必需的元数据
+- [ ] ✅ 源码和 JavaDoc 包会自动生成
+- [ ] ✅ License 文件存在且正确
+
+#### 7. 发布后操作
+
+1. **更新文档**：确保 README.md 中的 Maven 坐标正确
+2. **创建 GitHub Release**：基于 tag 创建 release 并添加更新日志
+3. **通知用户**：通过适当渠道通知用户新版本发布
+4. **准备下个版本**：将版本号更新为下个 SNAPSHOT 版本
+
+```bash
+# 准备下个开发版本
+mvn versions:set -DnewVersion=1.0.1-SNAPSHOT
+git add pom.xml
+git commit -m "Prepare for next development iteration"
+git push origin main
+```
+
+### 常见问题
+
+#### Q: 发布失败，提示 GPG 签名错误
+**A:** 检查 GPG 配置和密码设置，确保私钥可用且密码正确。
+
+#### Q: Sonatype 验证失败
+**A:** 确认 pom.xml 中包含所有必需字段：name, description, url, licenses, developers, scm。
+
+#### Q: 域名验证问题
+**A:** 如果无法验证 `com.aliyun` 域名，考虑使用 `io.github.yourusername` 作为 groupId。
+
+#### Q: 版本已存在错误
+**A:** Maven 中央仓库不允许覆盖已发布的版本，需要使用新的版本号。
+
+更多详细信息请参考 [Sonatype 官方文档](https://central.sonatype.org/publish/publish-guide/)。
