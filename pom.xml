@@ -4,14 +4,14 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.speedpix</groupId>
+    <groupId>com.aliyun</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>SpeedPix Java SDK</name>
     <description>Java client library for the SpeedPix API, enabling AI image generation workflows</description>
-    <url>https://github.com/speedpix/speedpix-java</url>
+    <url>https://github.com/aliyun/speedpix-java</url>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -212,8 +212,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/speedpix/speedpix-java.git</connection>
-        <developerConnection>scm:git:ssh://github.com:speedpix/speedpix-java.git</developerConnection>
-        <url>http://github.com/speedpix/speedpix-java/tree/main</url>
+        <connection>scm:git:git://github.com/aliyun/speedpix-java.git</connection>
+        <developerConnection>scm:git:ssh://github.com:aliyun/speedpix-java.git</developerConnection>
+        <url>http://github.com/aliyun/speedpix-java/tree/main</url>
     </scm>
 </project>

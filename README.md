@@ -44,7 +44,7 @@
 
 ```xml
 <dependency>
-    <groupId>io.github.speedpix</groupId>
+    <groupId>com.aliyun</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -53,7 +53,7 @@
 ### Gradle
 
 ```gradle
-implementation 'io.github.speedpix:speedpix-java:1.0.0'
+implementation 'com.aliyun:speedpix-java:1.0.0'
 ```
 
 ## 快速开始
