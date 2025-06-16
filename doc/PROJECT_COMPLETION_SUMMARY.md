@@ -6,7 +6,7 @@
 
 ### 📊 发布信息
 
-- **GroupId**: `io.github.speedpix`
+- **GroupId**: `com.aliyun.speedpix`
 - **ArtifactId**: `speedpix-java`
 - **Version**: `1.0.0`
 - **发布时间**: 2025年6月13日
@@ -15,8 +15,8 @@
 ### 🔗 访问链接
 
 - **Central Portal**: https://central.sonatype.com/publishing/deployments
-- **Maven Central**: https://repo1.maven.org/maven2/io/github/speedpix/speedpix-java/1.0.0/
-- **Maven Central Search**: https://search.maven.org/artifact/io.github.speedpix/speedpix-java/1.0.0/jar
+- **Maven Central**: https://repo1.maven.org/maven2/com/aliyun/speedpix/speedpix-java/1.0.0/
+- **Maven Central Search**: https://search.maven.org/artifact/com.aliyun.speedpix/speedpix-java/1.0.0/jar
 
 ### 📦 使用方式
 
@@ -25,7 +25,7 @@
 **Maven:**
 ```xml
 <dependency>
-    <groupId>io.github.speedpix</groupId>
+    <groupId>com.aliyun.speedpix</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -33,7 +33,7 @@
 
 **Gradle:**
 ```gradle
-implementation 'io.github.speedpix:speedpix-java:1.0.0'
+implementation 'com.aliyun.speedpix:speedpix-java:1.0.0'
 ```
 
 ## ✅ 完成的工作

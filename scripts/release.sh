@@ -162,7 +162,7 @@ if [ "$RELEASE_TYPE" = "release" ]; then
 
     if [ $? -eq 0 ]; then
         print_status "Deployment successful!"
-        print_status "Artifact: io.github.speedpix:speedpix-java:$VERSION"
+        print_status "Artifact: com.aliyun.speedpix:speedpix-java:$VERSION"
         print_status ""
         print_status "Next steps:"
         echo "1. Check https://central.sonatype.com/ for the deployment status"

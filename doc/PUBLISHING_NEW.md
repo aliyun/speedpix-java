@@ -34,7 +34,7 @@
 ### 3. 申请 Namespace
 
 1. 在 Central Portal 中点击 "Add Namespace"
-2. 输入 `io.github.speedpix`
+2. 输入 `com.aliyun.speedpix`
 3. 选择 "GitHub" 验证方式
 4. 按照指示验证 GitHub 仓库所有权
 5. 等待自动验证（通常几分钟内完成）
@@ -146,10 +146,10 @@ gpg --armor --export YOUR_KEY_ID > public-key.asc
 
 ```bash
 # 检查 Maven Central（发布后约 30 分钟可用）
-curl -I "https://repo1.maven.org/maven2/io/github/speedpix/speedpix-java/1.0.0/"
+curl -I "https://repo1.maven.org/maven2/com/aliyun/speedpix/speedpix-java/1.0.0/"
 
 # 搜索工件
-curl "https://search.maven.org/solrsearch/select?q=g:io.github.speedpix"
+curl "https://search.maven.org/solrsearch/select?q=g:com.aliyun.speedpix"
 ```
 
 ## 🔍 故障排除
