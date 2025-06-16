@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * 输出转换工具类
  *
- * 提供将 Map<String, Object> 数据转换为用户定义数据结构的功能。
+ * 提供将 Map&lt;String, Object&gt; 数据转换为用户定义数据结构的功能。
  * 使用 Jackson ObjectMapper 进行类型转换。
  */
 public class OutputConverterUtils {

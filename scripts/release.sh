@@ -92,10 +92,17 @@ if ! gpg --list-secret-keys | grep -q "sec"; then
     exit 1
 fi
 
-# Check Maven settings for OSSRH credentials
+# Check Maven settings for Central Portal credentials
 if [ ! -f ~/.m2/settings.xml ]; then
     print_warning "Maven settings.xml not found."
-    print_warning "Make sure SONATYPE_USERNAME and SONATYPE_PASSWORD environment variables are set."
+    print_warning "Make sure you have configured Central Portal credentials."
+    print_warning "See https://central.sonatype.org/publish/generate-portal-token/"
+fi
+
+# Check for Central Portal server configuration
+if ! grep -q "<id>central</id>" ~/.m2/settings.xml 2>/dev/null; then
+    print_warning "Central Portal server configuration not found in settings.xml"
+    print_warning "Please add your Central Portal credentials to ~/.m2/settings.xml"
 fi
 
 print_status "Pre-flight checks passed"
@@ -149,17 +156,17 @@ if [ "$RELEASE_TYPE" = "release" ]; then
     git push origin $CURRENT_BRANCH
     git push origin "v$VERSION"
 
-    # Deploy to Maven Central
-    print_status "Deploying to Maven Central..."
-    mvn clean deploy -P ossrh
+    # Deploy to Maven Central via Central Portal
+    print_status "Deploying to Maven Central via Central Portal..."
+    mvn clean deploy
 
     if [ $? -eq 0 ]; then
         print_status "Deployment successful!"
         print_status "Artifact: io.github.speedpix:speedpix-java:$VERSION"
         print_status ""
         print_status "Next steps:"
-        echo "1. Check https://central.sonatype.com/ for the artifact"
-        echo "2. The artifact will be available in Maven Central within 30 minutes"
+        echo "1. Check https://central.sonatype.com/ for the deployment status"
+        echo "2. The artifact will be automatically published to Maven Central"
         echo "3. Update documentation if needed"
     else
         print_error "Deployment failed!"
@@ -183,11 +190,14 @@ if [ "$RELEASE_TYPE" = "release" ]; then
 else
     # Snapshot workflow
     print_status "Deploying snapshot version..."
-    mvn clean deploy -P ossrh
+
+    # 对于 snapshot 版本，跳过 GPG 签名和 JavaDoc 生成以便快速测试
+    mvn clean deploy -Dgpg.skip=true -Dmaven.javadoc.skip=true
 
     if [ $? -eq 0 ]; then
         print_status "Snapshot deployment successful!"
         print_status "Snapshot artifacts are available in OSSRH snapshot repository"
+        print_status "Note: GPG signing and JavaDoc generation were skipped for snapshot"
     else
         print_error "Snapshot deployment failed!"
         exit 1

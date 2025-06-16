@@ -53,15 +53,15 @@ public class SpeedPixClient {
         this.userAgent = userAgent != null ? userAgent : "speedpix-java/1.0.0";
 
         // 验证必需参数
-        if (this.endpoint == null || this.endpoint.isEmpty()) {
+        if (this.endpoint == null || this.endpoint.trim().isEmpty()) {
             throw new IllegalArgumentException(
                 "endpoint is required, set SPEEDPIX_ENDPOINT env var or pass endpoint parameter");
         }
-        if (this.appKey == null || this.appKey.isEmpty()) {
+        if (this.appKey == null || this.appKey.trim().isEmpty()) {
             throw new IllegalArgumentException(
                 "appKey is required, set SPEEDPIX_APP_KEY env var or pass appKey parameter");
         }
-        if (this.appSecret == null || this.appSecret.isEmpty()) {
+        if (this.appSecret == null || this.appSecret.trim().isEmpty()) {
             throw new IllegalArgumentException(
                 "appSecret is required, set SPEEDPIX_APP_SECRET env var or pass appSecret parameter");
         }
@@ -82,6 +82,8 @@ public class SpeedPixClient {
 
     /**
      * 获取预测服务
+     *
+     * @return PredictionsService实例
      */
     public PredictionsService predictions() {
         return predictionsService;
@@ -89,6 +91,8 @@ public class SpeedPixClient {
 
     /**
      * 获取文件服务
+     *
+     * @return FilesService实例
      */
     public FilesService files() {
         return filesService;
@@ -96,6 +100,14 @@ public class SpeedPixClient {
 
     /**
      * 运行模型并返回结果
+     *
+     * @param <T> 返回结果的类型
+     * @param workflowId 工作流ID
+     * @param input 输入参数Map
+     * @param targetClass 目标结果类型
+     * @return 预测结果
+     * @throws SpeedPixException SpeedPix业务异常
+     * @throws InterruptedException 线程中断异常
      */
     public <T> Prediction<T> run(String workflowId, Map<String, Object> input, Class<T> targetClass)
         throws SpeedPixException,
@@ -105,6 +117,13 @@ public class SpeedPixClient {
 
     /**
      * 运行模型并返回结果（使用ComfyPromptRequest）
+     *
+     * @param <T> 返回结果的类型
+     * @param request ComfyPrompt请求对象
+     * @param targetClass 目标结果类型
+     * @return 预测结果
+     * @throws SpeedPixException SpeedPix业务异常
+     * @throws InterruptedException 线程中断异常
      */
     public <T> Prediction<T> run(ComfyPromptRequest request, Class<T> targetClass)
         throws SpeedPixException, InterruptedException {
@@ -112,7 +131,15 @@ public class SpeedPixClient {
     }
 
     /**
-     * 运行模型并返回结果（使用ComfyPromptRequest）
+     * 运行模型并返回结果（使用ComfyPromptRequest，支持resourceConfigId）
+     *
+     * @param <T> 返回结果的类型
+     * @param request ComfyPrompt请求对象
+     * @param resourceConfigId 资源配置ID
+     * @param targetClass 目标结果类型
+     * @return 预测结果
+     * @throws SpeedPixException SpeedPix业务异常
+     * @throws InterruptedException 线程中断异常
      */
     public <T> Prediction<T> run(ComfyPromptRequest request, String resourceConfigId, Class<T> targetClass)
         throws SpeedPixException, InterruptedException {
@@ -120,7 +147,17 @@ public class SpeedPixClient {
     }
 
     /**
-     * 运行模型并返回结果（使用ComfyPromptRequest）
+     * 运行模型并返回结果（使用ComfyPromptRequest，支持完整参数）
+     *
+     * @param <T> 返回结果的类型
+     * @param request ComfyPrompt请求对象
+     * @param resourceConfigId 资源配置ID
+     * @param wait 是否等待结果完成
+     * @param pollingInterval 轮询间隔（秒）
+     * @param targetClass 目标结果类型
+     * @return 预测结果
+     * @throws SpeedPixException SpeedPix业务异常
+     * @throws InterruptedException 线程中断异常
      */
     public <T> Prediction<T> run(ComfyPromptRequest request, String resourceConfigId, boolean wait,
         double pollingInterval, Class<T> targetClass)

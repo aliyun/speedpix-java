@@ -822,7 +822,7 @@ mvn install
 
 ### 发布到 Maven 中央仓库
 
-如需发布新版本到 Maven 中央仓库，请参考 [PUBLISHING.md](PUBLISHING.md) 获取详细指南。
+如需发布新版本到 Maven 中央仓库，请参考 [PUBLISHING.md](doc/PUBLISHING.md) 获取详细指南。
 
 ## 系统要求
 

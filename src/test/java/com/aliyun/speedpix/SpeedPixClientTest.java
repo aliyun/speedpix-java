@@ -29,25 +29,40 @@ public class SpeedPixClientTest {
 
     @Test
     public void testClientCreationWithMissingEndpoint() {
-        // 测试缺少 endpoint 时抛出异常
+        // 测试缺少 endpoint 时抛出异常（使用空字符串而不是null）
         assertThrows(IllegalArgumentException.class, () -> {
-            new SpeedPixClient(null, "test-app-key", "test-app-secret");
+            new SpeedPixClient("", "test-app-key", "test-app-secret");
+        });
+
+        // 也测试空白字符串
+        assertThrows(IllegalArgumentException.class, () -> {
+            new SpeedPixClient("   ", "test-app-key", "test-app-secret");
         });
     }
 
     @Test
     public void testClientCreationWithMissingAppKey() {
-        // 测试缺少 appKey 时抛出异常
+        // 测试缺少 appKey 时抛出异常（使用空字符串而不是null）
         assertThrows(IllegalArgumentException.class, () -> {
-            new SpeedPixClient("https://test-endpoint.com", null, "test-app-secret");
+            new SpeedPixClient("https://test-endpoint.com", "", "test-app-secret");
+        });
+
+        // 也测试空白字符串
+        assertThrows(IllegalArgumentException.class, () -> {
+            new SpeedPixClient("https://test-endpoint.com", "   ", "test-app-secret");
         });
     }
 
     @Test
     public void testClientCreationWithMissingAppSecret() {
-        // 测试缺少 appSecret 时抛出异常
+        // 测试缺少 appSecret 时抛出异常（使用空字符串而不是null）
         assertThrows(IllegalArgumentException.class, () -> {
-            new SpeedPixClient("https://test-endpoint.com", "test-app-key", null);
+            new SpeedPixClient("https://test-endpoint.com", "test-app-key", "");
+        });
+
+        // 也测试空白字符串
+        assertThrows(IllegalArgumentException.class, () -> {
+            new SpeedPixClient("https://test-endpoint.com", "test-app-key", "   ");
         });
     }
 

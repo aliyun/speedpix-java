@@ -179,3 +179,4 @@ bld/
 
 # Application specific
 # Add any project-specific files/directories that should be ignored
+*.asc

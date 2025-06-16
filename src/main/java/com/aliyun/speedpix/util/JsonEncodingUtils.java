@@ -31,6 +31,13 @@ public class JsonEncodingUtils {
 
     /**
      * 编码对象，处理文件上传
+     *
+     * @param obj 需要编码的对象Map
+     * @param strategy 文件编码策略
+     * @param filesService 文件服务实例
+     * @return 编码后的对象Map
+     * @throws IOException 文件操作异常
+     * @throws SpeedPixException SpeedPix业务异常
      */
     public static Map<String, Object> encodeJson(Map<String, Object> obj, FileEncodingStrategy strategy,
         FilesService filesService)
@@ -147,6 +154,10 @@ public class JsonEncodingUtils {
 
     /**
      * 对象转 JSON 字符串
+     *
+     * @param obj 需要转换的对象
+     * @return JSON字符串
+     * @throws JsonProcessingException JSON处理异常
      */
     public static String toJsonString(Object obj) throws JsonProcessingException {
         return objectMapper.writeValueAsString(obj);
@@ -154,6 +165,12 @@ public class JsonEncodingUtils {
 
     /**
      * JSON 字符串转对象
+     *
+     * @param <T> 目标类型泛型
+     * @param json JSON字符串
+     * @param clazz 目标类型的Class对象
+     * @return 转换后的对象
+     * @throws JsonProcessingException JSON处理异常
      */
     public static <T> T fromJsonString(String json, Class<T> clazz) throws JsonProcessingException {
         return objectMapper.readValue(json, clazz);

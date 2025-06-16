@@ -183,6 +183,9 @@ public class MimeTypeDetector {
 
     /**
      * 根据文件扩展名猜测 MIME 类型（备用方法）
+     *
+     * @param filename 文件名
+     * @return 对应的MIME类型，未知类型时返回"application/octet-stream"
      */
     public static String guessMimeTypeFromFilename(String filename) {
         if (filename == null || filename.isEmpty()) {

@@ -19,6 +19,14 @@ public class AuthUtils {
 
     /**
      * 生成阿里云 API 网关认证头
+     *
+     * @param httpMethod HTTP请求方法，如GET、POST等
+     * @param path 请求路径
+     * @param appKey 应用Key
+     * @param appSecret 应用Secret
+     * @param requestBody 请求体内容
+     * @param customHeaders 自定义请求头
+     * @return 包含认证信息的请求头Map
      */
     public static Map<String, String> generateAuthHeaders(
             String httpMethod,
