@@ -38,14 +38,64 @@ implementation 'io.github.speedpix:speedpix-java:1.0.0'
 ### 设置环境变量
 
 ```bash
-export SPEEDPIX_ENDPOINT="your-endpoint.com"
-export SPEEDPIX_APP_KEY="your-app-key"
-export SPEEDPIX_APP_SECRET="your-app-secret"
+export SPEEDPIX_ENDPOINT="your-endpoint.com"  # 可选，默认为 https://openai.edu-aliyun.com
+export SPEEDPIX_APP_KEY="your-app-key"        # 必需
+export SPEEDPIX_APP_SECRET="your-app-secret"  # 必需
 ```
 
 ### 基础使用
 
-#### 方法 1：直接运行（推荐新手）
+SpeedPix Java SDK 提供多种方式创建客户端，选择最适合您的方式：
+
+#### 方法 1：最简方式（推荐）
+
+```java
+import com.aliyun.speedpix.SpeedPixClient;
+
+// 仅需提供必需的认证信息，使用默认endpoint
+SpeedPixClient client = new SpeedPixClient("your-app-key", "your-app-secret");
+```
+
+#### 方法 2：从环境变量创建
+
+```java
+// 从环境变量自动读取配置（需要设置环境变量）
+SpeedPixClient client = new SpeedPixClient();
+```
+
+#### 方法 3：自定义endpoint
+
+```java
+// 使用自定义endpoint
+SpeedPixClient client = new SpeedPixClient(
+    "https://your-custom-endpoint.com",
+    "your-app-key",
+    "your-app-secret"
+);
+```
+
+#### 方法 4：Builder模式（高级用法）
+
+```java
+// 使用Builder模式进行灵活配置
+SpeedPixClient client = SpeedPixClient.builder()
+    .appKey("your-app-key")
+    .appSecret("your-app-secret")
+    .endpoint("https://custom-endpoint.com")  // 可选
+    .userAgent("my-app/1.0.0")               // 可选
+    .timeoutSeconds(60)                      // 可选
+    .build();
+
+// 或者从环境变量构建
+SpeedPixClient client = SpeedPixClient.builder()
+    .fromEnv()  // 自动从环境变量读取
+    .timeoutSeconds(120)  // 覆盖特定配置
+    .build();
+```
+
+### 完整示例
+
+#### 直接运行（推荐新手）
 
 ```java
 import com.aliyun.speedpix.SpeedPixClient;
@@ -77,8 +127,8 @@ public class BasicUsageExample {
     }
 
     public static void main(String[] args) throws Exception {
-        // 创建客户端（自动从环境变量读取配置）
-        SpeedPixClient client = new SpeedPixClient();
+        // 创建客户端（推荐：使用最简方式）
+        SpeedPixClient client = new SpeedPixClient("your-app-key", "your-app-secret");
 
         // 准备输入参数
         Map<String, Object> input = new HashMap<>();

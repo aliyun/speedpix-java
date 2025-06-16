@@ -32,31 +32,60 @@ public class SpeedPixClient {
     private final PredictionsService predictionsService;
     private final FilesService filesService;
 
+    /**
+     * 默认构造函数 - 从环境变量读取所有配置
+     * 需要设置 SPEEDPIX_APP_KEY 和 SPEEDPIX_APP_SECRET 环境变量
+     */
     public SpeedPixClient() {
         this(null, null, null, null, 30);
     }
 
     /**
-     * 构造函数
+     * 最简构造函数 - 推荐使用
+     * 使用默认endpoint，仅需要提供必需的认证信息
+     *
+     * @param appKey 应用密钥
+     * @param appSecret 应用密码
+     */
+    public SpeedPixClient(String appKey, String appSecret) {
+        this(null, appKey, appSecret, null, 30);
+    }
+
+    /**
+     * 标准构造函数 - 自定义endpoint
+     *
+     * @param endpoint API端点 (可选，默认: https://openai.edu-aliyun.com)
+     * @param appKey 应用密钥
+     * @param appSecret 应用密码
      */
     public SpeedPixClient(String endpoint, String appKey, String appSecret) {
         this(endpoint, appKey, appSecret, null, 30);
     }
 
     /**
-     * 构造函数
+     * 完整构造函数 - 自定义所有参数
+     *
+     * @param endpoint API端点 (可选，默认: https://openai.edu-aliyun.com)
+     * @param appKey 应用密钥
+     * @param appSecret 应用密码
+     * @param userAgent 用户代理 (可选，默认: speedpix-java/1.0.0)
+     * @param timeoutSeconds 超时时间秒数 (默认: 30)
      */
     public SpeedPixClient(String endpoint, String appKey, String appSecret, String userAgent, int timeoutSeconds) {
-        this.endpoint = endpoint != null ? endpoint : System.getenv("SPEEDPIX_ENDPOINT");
+        // 设置 endpoint，支持 null 和空字符串都使用默认值
+        String envEndpoint = System.getenv("SPEEDPIX_ENDPOINT");
+        if (endpoint != null && !endpoint.trim().isEmpty()) {
+            this.endpoint = endpoint;
+        } else if (envEndpoint != null && !envEndpoint.trim().isEmpty()) {
+            this.endpoint = envEndpoint;
+        } else {
+            this.endpoint = "https://openai.edu-aliyun.com";
+        }
         this.appKey = appKey != null ? appKey : System.getenv("SPEEDPIX_APP_KEY");
         this.appSecret = appSecret != null ? appSecret : System.getenv("SPEEDPIX_APP_SECRET");
         this.userAgent = userAgent != null ? userAgent : "speedpix-java/1.0.0";
 
-        // 验证必需参数
-        if (this.endpoint == null || this.endpoint.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                "endpoint is required, set SPEEDPIX_ENDPOINT env var or pass endpoint parameter");
-        }
+        // 验证必需参数 (endpoint 现在有默认值，不再必需)
         if (this.appKey == null || this.appKey.trim().isEmpty()) {
             throw new IllegalArgumentException(
                 "appKey is required, set SPEEDPIX_APP_KEY env var or pass appKey parameter");
@@ -405,5 +434,107 @@ public class SpeedPixClient {
      */
     private String buildUrl(String path) {
         return endpoint + path;
+    }
+
+    /**
+     * SpeedPixClient Builder - 提供流式API构建客户端
+     *
+     * 使用示例:
+     * <pre>
+     * SpeedPixClient client = SpeedPixClient.builder()
+     *     .appKey("your-app-key")
+     *     .appSecret("your-app-secret")
+     *     .endpoint("https://custom-endpoint.com")  // 可选
+     *     .userAgent("my-app/1.0.0")               // 可选
+     *     .timeoutSeconds(60)                      // 可选
+     *     .build();
+     * </pre>
+     */
+    public static class Builder {
+        private String endpoint;
+        private String appKey;
+        private String appSecret;
+        private String userAgent;
+        private int timeoutSeconds = 30;
+
+        /**
+         * 设置API端点
+         * @param endpoint API端点URL (可选，默认: https://openai.edu-aliyun.com)
+         * @return Builder实例
+         */
+        public Builder endpoint(String endpoint) {
+            this.endpoint = endpoint;
+            return this;
+        }
+
+        /**
+         * 设置应用密钥
+         * @param appKey 应用密钥
+         * @return Builder实例
+         */
+        public Builder appKey(String appKey) {
+            this.appKey = appKey;
+            return this;
+        }
+
+        /**
+         * 设置应用密码
+         * @param appSecret 应用密码
+         * @return Builder实例
+         */
+        public Builder appSecret(String appSecret) {
+            this.appSecret = appSecret;
+            return this;
+        }
+
+        /**
+         * 设置用户代理
+         * @param userAgent 用户代理字符串
+         * @return Builder实例
+         */
+        public Builder userAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
+
+        /**
+         * 设置超时时间
+         * @param timeoutSeconds 超时时间(秒)
+         * @return Builder实例
+         */
+        public Builder timeoutSeconds(int timeoutSeconds) {
+            this.timeoutSeconds = timeoutSeconds;
+            return this;
+        }
+
+        /**
+         * 从环境变量自动配置认证信息
+         * @return Builder实例
+         */
+        public Builder fromEnv() {
+            this.appKey = System.getenv("SPEEDPIX_APP_KEY");
+            this.appSecret = System.getenv("SPEEDPIX_APP_SECRET");
+            String envEndpoint = System.getenv("SPEEDPIX_ENDPOINT");
+            if (envEndpoint != null && !envEndpoint.trim().isEmpty()) {
+                this.endpoint = envEndpoint;
+            }
+            return this;
+        }
+
+        /**
+         * 构建SpeedPixClient实例
+         * @return SpeedPixClient实例
+         */
+        public SpeedPixClient build() {
+            return new SpeedPixClient(endpoint, appKey, appSecret, userAgent, timeoutSeconds);
+        }
+    }
+
+    /**
+     * 创建Builder实例
+     * @return Builder实例
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 }
