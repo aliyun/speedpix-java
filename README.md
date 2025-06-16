@@ -1,6 +1,29 @@
 # SpeedPix Java SDK
 
-智作工坊 Java SDK，提供简洁易用的 API 接口，专注于 AI 图像生成和处理工作流。
+智作工坊 SpeedPix Java SDK，提供简洁易用的 API 接口，专注于 AI 图像生成和处理工作流。
+
+## 📚 关于智作工坊
+
+智作工坊（AIGC Service Lab）是阿里云教育推出的 AIGC 生成服务，主要为泛教育、设计业务企业提供高效的 AIGC（人工智能生成内容）PAAS 服务。
+
+### 🎯 核心功能
+- **文生图**：根据文本描述生成高质量图像
+- **图生图**：基于输入图像进行风格转换或内容变换
+- **文转视频**：将文本描述转换为动态视频内容
+- **图转视频**：将静态图像转换为动态视频
+
+### 🔧 技术支持
+- 支持**通义万相**以及开源的 **Stable Diffusion** 模型
+- 提供 **WEB UI** 和 **ComfyUI** 两种模式
+- 集成阿里云严格的**内容安全检测服务**
+- 支持自定义界面部署和权限管理
+
+### 📖 详细文档
+- [智作工坊产品文档](https://help.aliyun.com/document_detail/2804197.html)
+- [产品概述](https://help.aliyun.com/document_detail/2804199.html)
+- [智作工坊控制台](https://eduplatform-sp.console.aliyun.com/)
+
+---
 
 ## 特性
 
