@@ -248,6 +248,47 @@ public class TraditionalExample {
 }
 ```
 
+
+#### 方法4: Spring Boot 集成
+
+SpeedPix Java SDK 与 Spring Boot 无缝集成，支持 Spring Boot 2.x 和 3.x 版本。
+
+**快速集成**
+
+```xml
+<!-- 添加依赖 -->
+<dependency>
+    <groupId>com.aliyun.speedpix</groupId>
+    <artifactId>speedpix-java</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+```java
+@Service
+public class ImageService {
+
+    @Autowired
+    private SpeedPixProperties speedPixProperties;
+
+    public String generateImage(String prompt) {
+        SpeedPix client = new SpeedPix(
+            speedPixProperties.getApiKey(),
+            speedPixProperties.getApiSecret(),
+            speedPixProperties.getBaseUrl()
+        );
+
+        return client.txt2img(prompt).run();
+    }
+}
+```
+
+📖 **完整集成指南**: [Spring Boot 集成文档](doc/SPRING_BOOT_INTEGRATION.md)
+- Spring Boot 2.x 和 3.x 完整案例
+- 配置类、服务层、控制器层示例
+- 全局异常处理和最佳实践
+- 版本迁移指南
+
 ## 详细使用方法
 
 ### 自定义结果数据结构
@@ -905,6 +946,7 @@ mvn install
 ## 许可证
 
 MIT License
+
 
 ## 获取帮助
 
