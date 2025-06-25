@@ -14,8 +14,8 @@
 - 登录后创建一个新的 Issue
 - Project: Community Support - Open Source Project Repository Hosting (OSSRH)
 - Issue Type: New Project
-- Summary: Request for io.github.speedpix groupId
-- Group Id: io.github.speedpix
+- Summary: Request for com.aliyun groupId
+- Group Id: com.aliyun
 - Project URL: https://github.com/speedpix/speedpix-java （请替换为你的实际 GitHub 仓库）
 - SCM URL: https://github.com/speedpix/speedpix-java.git
 

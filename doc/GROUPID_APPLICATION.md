@@ -1,6 +1,6 @@
 # Sonatype OSSRH GroupId 申请模板
 
-如果你还没有为 `io.github.speedpix` 提交 GroupId 申请，请使用以下信息：
+如果你还没有为 `com.aliyun` 提交 GroupId 申请，请使用以下信息：
 
 ## JIRA Issue 创建信息
 
@@ -9,22 +9,22 @@
 **填写信息**:
 - **Project**: Community Support - Open Source Project Repository Hosting (OSSRH)
 - **Issue Type**: New Project
-- **Summary**: Request for io.github.speedpix groupId
+- **Summary**: Request for com.aliyun groupId
 - **Description**:
   ```
-  I would like to request access to publish artifacts under the groupId: io.github.speedpix
+  I would like to request access to publish artifacts under the groupId: com.aliyun
 
   This is for the SpeedPix Java SDK project, which provides a Java client library for AI image generation workflows.
   ```
 
-- **Group Id**: `io.github.speedpix`
+- **Group Id**: `com.aliyun`
 - **Project URL**: `https://github.com/speedpix/speedpix-java` (请替换为你的实际 GitHub 仓库)
 - **SCM URL**: `https://github.com/speedpix/speedpix-java.git`
 
 ## 重要说明
 
 1. **GitHub 仓库要求**: 确保你的 GitHub 仓库是公开的，并且包含项目代码
-2. **域名验证**: 使用 `io.github.speedpix` 需要你拥有对应的 GitHub 用户名或组织
+2. **域名验证**: 使用 `com.aliyun` 需要你拥有对应的阿里云域名控制权
 3. **等待批准**: 申请提交后，通常需要 1-2 个工作日审核
 
 ## 申请状态检查

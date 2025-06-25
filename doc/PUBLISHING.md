@@ -30,9 +30,9 @@ sec   rsa4096/1A2B3C4D5E6F7G8H 2025-06-13 [SC]
 
 ### 2. 验证 GitHub 仓库所有权
 
-由于使用 `io.github.speedpix` 作为 groupId，需要验证您对 `speedpix` GitHub 组织的控制权：
+由于使用 `com.aliyun` 作为 groupId，需要验证您对阿里云域名的控制权：
 
-1. 在 Sonatype Central Portal 中申请 `io.github.speedpix` namespace
+1. 在 Sonatype Central Portal 中申请 `com.aliyun` namespace
 2. 按照指示在 GitHub 仓库中添加验证文件或创建指定的仓库
 
 ### 3. 生成 GPG 密钥
@@ -246,7 +246,7 @@ git push origin main
 
 ```xml
 <dependency>
-    <groupId>io.github.speedpix</groupId>
+    <groupId>com.aliyun</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>

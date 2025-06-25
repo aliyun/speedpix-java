@@ -18,7 +18,7 @@
 ### 2. 账号权限问题
 - 没有 Sonatype OSSRH 账号
 - 账号存在但没有部署权限
-- GroupId `io.github.speedpix` 未获得批准
+- GroupId `com.aliyun` 未获得批准
 
 ### 3. 配置问题
 - settings.xml 中的 server id 不匹配
@@ -39,7 +39,7 @@
 
 ### 步骤 3: 检查 GroupId 权限
 1. 登录 https://issues.sonatype.org/
-2. 搜索是否有关于 `io.github.speedpix` 的 JIRA issue
+2. 搜索是否有关于 `com.aliyun` 的 JIRA issue
 3. 如果没有，需要创建新的 GroupId 申请
 
 ### 步骤 4: 更新 settings.xml

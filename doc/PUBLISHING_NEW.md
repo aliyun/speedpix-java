@@ -162,7 +162,7 @@ curl "https://search.maven.org/solrsearch/select?q=g:com.aliyun.speedpix"
 - 验证 Token 是否过期
 
 **2. 403 Forbidden**
-- 确认 Namespace `io.github.speedpix` 已被批准
+- 确认 Namespace `com.aliyun` 已被批准
 - 检查 GitHub 仓库验证是否完成
 
 **3. GPG 签名失败**

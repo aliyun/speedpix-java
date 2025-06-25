@@ -53,7 +53,7 @@
 
         <!-- SpeedPix Java SDK -->
         <dependency>
-            <groupId>com.aliyun.speedpix</groupId>
+            <groupId>com.aliyun</groupId>
             <artifactId>speedpix-java</artifactId>
             <version>1.0.0</version>
         </dependency>
@@ -399,7 +399,7 @@ public class ImageController {
 
         <!-- SpeedPix Java SDK -->
         <dependency>
-            <groupId>com.aliyun.speedpix</groupId>
+            <groupId>com.aliyun</groupId>
             <artifactId>speedpix-java</artifactId>
             <version>1.0.0</version>
         </dependency>

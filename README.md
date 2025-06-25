@@ -1,6 +1,12 @@
 # SpeedPix Java SDK
 
-智作工坊 SpeedPix Java SDK，提供简洁易用的 API 接口，专注于 AI 图像生成和处理工作流。
+智作工坊 SpeedPix Java SDK，```xml
+<dependency>
+    <groupId>com.aliyun</groupId>
+    <artifactId>speedpix-java</artifactId>
+    <version>1.0.0</version>
+</dependency>
+``` API 接口，专注于 AI 图像生成和处理工作流。
 
 ## 📚 关于智作工坊
 
@@ -44,7 +50,7 @@
 
 ```xml
 <dependency>
-    <groupId>com.aliyun.speedpix</groupId>
+    <groupId>com.aliyun</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -53,7 +59,7 @@
 ### Gradle
 
 ```gradle
-implementation 'com.aliyun.speedpix:speedpix-java:1.0.0'
+implementation 'com.aliyun:speedpix-java:1.0.0'
 ```
 
 ## 快速开始
@@ -258,7 +264,7 @@ SpeedPix Java SDK 与 Spring Boot 无缝集成，支持 Spring Boot 2.x 和 3.x 
 ```xml
 <!-- 添加依赖 -->
 <dependency>
-    <groupId>com.aliyun.speedpix</groupId>
+    <groupId>com.aliyun</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>
