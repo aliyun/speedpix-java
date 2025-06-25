@@ -103,7 +103,7 @@ public class ComfyPromptRequest {
         private String workflowId;
         private String versionId;
         private Map<String, Object> inputs;
-        private String aliasId = "main";
+        private String aliasId;
         private Boolean randomiseSeeds;
         private Boolean returnTempFiles;
 

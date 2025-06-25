@@ -423,255 +423,62 @@ public class TraditionalPredictionExample {
 }
 ```
 
-### ComfyPromptRequest Builder 模式详解
+## 🚀 资源配置
+
+### 共享算力 vs 独享资源
+
+智作工坊支持两种资源类型：
+
+- **共享算力**：默认使用，成本较低，适合一般业务场景
+- **独享资源**：推荐对延迟和成功率敏感的业务使用，提供更稳定的性能保障
+
+### 配置方式
+
+默认情况下，如果不指定资源配置，系统会使用共享算力资源。如果您对延迟和成功率有较高要求，推荐配置独享资源。
 
 ```java
-ComfyPromptRequest request = ComfyPromptRequest.builder()
-    .workflowId("your-workflow-id")         // 必需：工作流ID
-    .aliasId("main")                        // 可选：别名ID
-    .versionId("v1.0")                      // 可选：版本ID
-    .inputs(inputMap)                       // 必需：输入参数
-    .randomiseSeeds(true)                   // 可选：是否随机化种子
-    .returnTempFiles(false)                 // 可选：是否返回临时文件
-    .build();
-```
-### 图像处理功能
-
-SpeedPix SDK 提供强大的图像处理功能，支持直接保存和流式处理：
-
-```java
-import com.aliyun.speedpix.model.ImageOutput;
-import java.io.InputStream;
-import java.io.FileOutputStream;
-
-// 运行图像处理工作流
-Prediction<ResultDTO> result = client.run(request, ResultDTO.class);
-
-// 方法 1：直接保存到文件
-result.getOutput().getImages().save("output.png");
-
-// 方法 2：获取输入流进行自定义处理
-try (InputStream inputStream = result.getOutput().getImages().getInputStream()) {
-    // 保存到自定义位置
-    try (FileOutputStream fos = new FileOutputStream("/custom/path/result.png")) {
-        inputStream.transferTo(fos);
-    }
-}
-
-// 方法 3：获取图像数据进行进一步处理
-byte[] imageData = result.getOutput().getImages().getData();
-// 进行图像分析、压缩等操作...
-```
-
-### 高级用法示例
-
-```java
-public class AdvancedExample {
-    public static void main(String[] args) throws Exception {
-        SpeedPixClient client = new SpeedPixClient();
-
-        // 图像风格转换
-        Map<String, Object> styleTransferInput = new HashMap<>();
-        styleTransferInput.put("image", "/path/to/content/image.jpg");
-        styleTransferInput.put("style_image", "/path/to/style/image.jpg");
-        styleTransferInput.put("strength", 0.8);
-
-        Prediction<ResultDTO> styleResult = client.run(ComfyPromptRequest.builder()
-            .workflowId("style-transfer-workflow")
-            .aliasId("main")
-            .inputs(styleTransferInput)
-            .build(), ResultDTO.class);
-
-        styleResult.getOutput().getImages().save("styled_image.png");
-
-        // 图像超分辨率
-        Map<String, Object> upscaleInput = new HashMap<>();
-        upscaleInput.put("image", "/path/to/low/res/image.jpg");
-        upscaleInput.put("scale_factor", 4);
-
-        Prediction<ResultDTO> upscaleResult = client.run(ComfyPromptRequest.builder()
-            .workflowId("upscale-workflow")
-            .aliasId("main")
-            .inputs(upscaleInput)
-            .build(), ResultDTO.class);
-
-        upscaleResult.getOutput().getImages().save("upscaled_image.png");
-    }
-}
-```
-
-## 完整示例
-
-基于 `BasicUsageExample.java` 的完整代码示例：
-
-```java
-package com.aliyun.speedpix.examples;
-
-import com.aliyun.speedpix.SpeedPix;
 import com.aliyun.speedpix.SpeedPixClient;
-import com.aliyun.speedpix.exception.PredictionException;
-import com.aliyun.speedpix.exception.SpeedPixException;
 import com.aliyun.speedpix.model.ComfyPromptRequest;
-import com.aliyun.speedpix.model.ImageOutput;
 import com.aliyun.speedpix.model.Prediction;
-
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * SpeedPix Java SDK 基础使用示例
- * 演示三种主要的使用方法
- */
-public class BasicUsageExample {
+// 使用共享算力（默认）
+Map<String, Object> input = new HashMap<>();
+input.put("prompt", "一个美丽的风景");
 
-    // 定义结果数据结构
-    public static class ResultDTO {
-        private ImageOutput images;
+Prediction<ResultDTO> result = client.run(ComfyPromptRequest.builder()
+    .workflowId("your-workflow-id")
+    .aliasId("main")
+    .inputs(input)
+    .build(), ResultDTO.class);
+    // 不指定 resourceConfigId 时自动使用共享算力
 
-        public ImageOutput getImages() {
-            return images;
-        }
+// 使用独享资源
+Prediction<ResultDTO> result = client.run(ComfyPromptRequest.builder()
+    .workflowId("your-workflow-id")
+    .aliasId("main")
+    .inputs(input)
+    .resourceConfigId("your-dedicated-resource-id")  // 指定独享资源ID
+    .build(), ResultDTO.class);
 
-        public void setImages(ImageOutput images) {
-            this.images = images;
-        }
-
-        @Override
-        public String toString() {
-            return "ResultDTO{images=" + images + '}';
-        }
-    }
-
-    public static void main(String[] args) {
-        try {
-            // 方法 1：直接运行（推荐新手）
-            directRunExample();
-
-            // 方法 2：使用全局静态方法
-            globalFunctionExample();
-
-            // 方法 3：传统预测接口
-            traditionalPredictionExample();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 方法 1：直接运行示例
-     */
-    private static void directRunExample() throws SpeedPixException, InterruptedException, IOException {
-        System.out.println("=== 方法 1：直接运行示例 ===");
-
-        // 创建客户端（自动从环境变量读取配置）
-        SpeedPixClient client = new SpeedPixClient();
-
-        // 准备输入参数
-        Map<String, Object> input = new HashMap<>();
-        input.put("image", "/Users/libin/Downloads/p850622.png");
-
-        // 直接运行并获取结果
-        Prediction<ResultDTO> r = client.run(ComfyPromptRequest.builder()
-            .workflowId("01jvp41b358md06w46fz1yz78a")
-            .aliasId("main")
-            .inputs(input)
-            .build(), ResultDTO.class);
-
-        System.out.println("输出结果: " + r);
-
-        // 保存生成的图像
-        r.getOutput().getImages().save("result.png");
-
-        // 或者使用输入流: result.getImages().getInputStream()
-    }
-
-    /**
-     * 方法 2：全局函数示例
-     */
-    private static void globalFunctionExample() throws SpeedPixException, InterruptedException {
-        System.out.println("=== 方法 2：全局函数示例 ===");
-
-        // 准备输入参数
-        Map<String, Object> input = new HashMap<>();
-        input.put("image", "/Users/libin/Downloads/p850622.png");
-
-        // 使用全局 run 函数
-        Prediction<ResultDTO> output = SpeedPix.run(ComfyPromptRequest.builder()
-            .workflowId("01jvp41b358md06w46fz1yz78a")
-            .aliasId("main")
-            .inputs(input)
-            .build(), ResultDTO.class);
-
-        System.out.println("输出结果: " + output);
-    }
-
-    /**
-     * 方法 3：传统预测接口示例
-     */
-    private static void traditionalPredictionExample() throws SpeedPixException, InterruptedException {
-        System.out.println("=== 方法 3：传统预测接口示例 ===");
-
-        SpeedPixClient client = new SpeedPixClient(null, null, null);
-
-        // 准备输入参数
-        Map<String, Object> input = new HashMap<>();
-        input.put("image", "/Users/libin/Downloads/p850622.png");
-
-        try {
-            // 创建预测任务
-            Prediction<ResultDTO> prediction = client.predictions().create(ComfyPromptRequest.builder()
-                .workflowId("01jvp41b358md06w46fz1yz78a")
-                .aliasId("main")
-                .inputs(input)
-                .build(), ResultDTO.class);
-            System.out.println("创建预测任务: " + prediction.getId());
-
-            // 等待完成
-            prediction = prediction.waitForCompletion();
-            System.out.println("最终状态: " + prediction.getStatus());
-
-            if (prediction.getOutput() != null) {
-                System.out.println("输出结果: " + prediction.getOutput());
-            }
-
-        } catch (PredictionException e) {
-            System.err.println("模型执行失败: " + e.getMessage());
-            if (e.getPrediction() != null) {
-                System.err.println("预测 ID: " + e.getPrediction().getId());
-                System.err.println("错误详情: " + e.getPrediction().getError());
-            }
-        } catch (SpeedPixException e) {
-            System.err.println("其他错误: " + e.getMessage());
-        }
-    }
-}
+// 使用静态方法指定独享资源
+Prediction<ResultDTO> result = SpeedPix.run(
+    ComfyPromptRequest.builder()
+        .workflowId("your-workflow-id")
+        .inputs(input)
+        .build(),
+    "your-dedicated-resource-id",  // 独享资源ID参数
+    ResultDTO.class
+);
 ```
 
-### 环境变量配置示例
+### 相关文档
 
-在项目根目录创建 `.env` 文件或设置系统环境变量：
+- [独享资源管理](https://help.aliyun.com/document_detail/2834512.html)
+- [资源配置参数说明](https://help.aliyun.com/document_detail/2844596.html)
 
-```bash
-# .env 文件或环境变量
-SPEEDPIX_ENDPOINT=your-endpoint.com
-SPEEDPIX_APP_KEY=your-app-key
-SPEEDPIX_APP_SECRET=your-app-secret
-```
-
-### 快速启动脚本
-
-```bash
-#!/bin/bash
-# 设置环境变量
-export SPEEDPIX_ENDPOINT="your-endpoint.com"
-export SPEEDPIX_APP_KEY="your-app-key"
-export SPEEDPIX_APP_SECRET="your-app-secret"
-
-# 编译并运行示例
-mvn compile exec:java -Dexec.mainClass="com.aliyun.speedpix.examples.BasicUsageExample"
-```
+---
 
 ## 文件处理
 
