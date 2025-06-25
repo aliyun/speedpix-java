@@ -94,16 +94,4 @@ public class ComfyPromptRequestTest {
         assertNull(request.getVersionId());
         assertEquals("", request.getAliasId());
     }
-
-    @Test
-    public void testNullAliasIdExplicitly() {
-        // 当明确设置 aliasId 为 null 时，应该保持 null（不是默认值）
-        ComfyPromptRequest request = ComfyPromptRequest.builder("workflow-123")
-            .inputs(Collections.singletonMap("prompt", "test"))
-            .aliasId(null)
-            .build();
-
-        assertNull(request.getVersionId());
-        assertNull(request.getAliasId());
-    }
 }

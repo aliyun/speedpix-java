@@ -142,7 +142,14 @@ public class ComfyPromptRequest {
             request.setWorkflowId(this.workflowId);
             request.setVersionId(this.versionId);
             request.setInputs(this.inputs);
-            request.setAliasId(this.aliasId);
+
+            // 如果没有提供 versionId 且没有明确指定 aliasId，则设置默认的 aliasId 为 "main"
+            if (this.versionId == null && this.aliasId == null) {
+                request.setAliasId("main");
+            } else {
+                request.setAliasId(this.aliasId);
+            }
+
             request.setRandomiseSeeds(this.randomiseSeeds);
             request.setReturnTempFiles(this.returnTempFiles);
             return request;
