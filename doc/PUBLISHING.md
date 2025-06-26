@@ -246,7 +246,7 @@ git push origin main
 
 ```xml
 <dependency>
-    <groupId>com.aliyun</groupId>
+    <groupId>com.aliyun.speedpix</groupId>
     <artifactId>speedpix-java</artifactId>
     <version>1.0.0</version>
 </dependency>
