@@ -1,12 +1,7 @@
 # SpeedPix Java SDK
 
-智作工坊 SpeedPix Java SDK，```xml
-<dependency>
-    <groupId>com.aliyun.speedpix</groupId>
-    <artifactId>speedpix-java</artifactId>
-    <version>1.0.0</version>
-</dependency>
-``` API 接口，专注于 AI 图像生成和处理工作流。
+智作工坊 SpeedPix Java SDK
+
 
 ## 📚 关于智作工坊
 
