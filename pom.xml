@@ -20,7 +20,7 @@
 
         <!-- Dependencies versions -->
         <okhttp.version>4.12.0</okhttp.version>
-        <jackson.version>2.15.2</jackson.version>
+        <jackson.version>2.18.6</jackson.version>
         <junit.version>5.10.0</junit.version>
         <slf4j.version>2.0.7</slf4j.version>
         <commons-codec.version>1.16.0</commons-codec.version>
